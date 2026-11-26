@@ -1,0 +1,10 @@
+# pruebas locales
+_test/
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# La fuente "Present" (NJ Studio, All Rights Reserved) no se publica por defecto.
+# Quita esta linea solo si tienes licencia para redistribuirla.
+fonts/Present.ttf

@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; child-src 'self'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types hilo">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#020806">
+<meta name="description" content="Hilograma MyD: crea hilogramas (string art) de forma privada, 100% en tu dispositivo.">
+<title>Hilograma MyD</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+<script defer src="js/engine.js"></script>
+<script defer src="js/storage.js"></script>
+<script defer src="js/i18n.js"></script>
+<script defer src="js/flags.js"></script>
+<script defer src="js/ui.js"></script>
+<script defer src="js/examples.js"></script>
+<script defer src="js/editor.js"></script>
+<script defer src="js/manual.js"></script>
+<script defer src="js/app.js"></script>
+</head>
+<body>
+<noscript><p class="noscript">Hilograma MyD necesita JavaScript. / Hilograma MyD requires JavaScript.</p></noscript>
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="topbar">
+  <button type="button" id="btnBrand" class="brand" data-i18n-aria="brand_home" aria-label="Ir al inicio">
+    <img src="icons/icon.svg" alt="" class="brand-logo" width="34" height="34">
+    <span class="brand-text">HILOGRAMA<span class="brand-myd">_MyD</span><span class="cursor" aria-hidden="true"></span></span>
+  </button>
+  <div class="top-actions">
+    <span class="sec-badge mono" title="Sin conexión a servidores"><span data-icon="shield"></span><span data-i18n="badge">LOCAL · OFFLINE</span></span>
+    <button type="button" id="btnInstall" class="btn small" hidden><span data-icon="download"></span><span data-i18n="install">Instalar app</span></button>
+    <button type="button" id="btnLang" class="lang-btn" data-i18n-aria="lang_choose" aria-label="Elegir idioma"></button>
+    <button type="button" id="btnSettings" class="icon-btn" data-i18n-aria="settings" aria-label="Ajustes"><span data-icon="menu"></span></button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============ INICIO ============ -->
+<section id="scr-home" class="screen">
+  <pre class="boot mono" id="bootLog" aria-hidden="true"></pre>
+  <h1 class="hero" data-i18n="home_title">Convierte una imagen en un hilograma</h1>
+  <p class="lead mono" data-i18n="home_lead">Clavos, hilo y números. Todo se calcula en tu dispositivo: tu imagen nunca sale de aquí.</p>
+  <div class="home-grid">
+    <button type="button" class="tile" id="goCreate">
+      <span class="tile-n">01</span><span class="tile-i" data-icon="image"></span>
+      <span class="tile-t" data-i18n="home_create">Crear hilograma</span>
+      <span class="tile-d mono" data-i18n="home_create_d">Elige una imagen, ajústala y calcula hilos, colores y metros.</span>
+    </button>
+    <button type="button" class="tile" id="goOpen">
+      <span class="tile-n">02</span><span class="tile-i" data-icon="file"></span>
+      <span class="tile-t" data-i18n="home_open">Abrir instrucciones</span>
+      <span class="tile-d mono" data-i18n="home_open_d">Carga un archivo .hilo creado en otro dispositivo.</span>
+    </button>
+    <button type="button" class="tile" id="goPaste">
+      <span class="tile-n">03</span><span class="tile-i" data-icon="hash"></span>
+      <span class="tile-t" data-i18n="home_paste">Ya tengo los números</span>
+      <span class="tile-d mono" data-i18n="home_paste_d">Pega una secuencia de clavos o prueba un ejemplo.</span>
+    </button>
+  </div>
+  <section class="panel">
+    <h2 class="panel-t" data-i18n="projects">Mis proyectos en este dispositivo</h2>
+    <div id="projectList" class="project-list"></div>
+    <p id="projectEmpty" class="muted mono" data-i18n="projects_empty">Aún no hay proyectos guardados.</p>
+  </section>
+</section>
+
+<!-- ============ CREAR ============ -->
+<section id="scr-create" class="screen" hidden>
+  <ol class="stepper" id="stepper">
+    <li data-n="1"><span class="st-n">1</span><span data-i18n="st_image">Imagen</span></li>
+    <li data-n="2"><span class="st-n">2</span><span data-i18n="st_design">Diseño</span></li>
+    <li data-n="3"><span class="st-n">3</span><span data-i18n="st_seal">Generar</span></li>
+  </ol>
+
+  <div id="cStep1" class="cstep">
+    <label class="dropzone" id="dropImage">
+      <input type="file" id="fileImage" accept="image/*" class="sr-only">
+      <span class="dz-icon" data-icon="image"></span>
+      <span class="dz-t" data-i18n="pick_image">Toca para elegir una imagen</span>
+      <span class="dz-d mono" data-i18n="pick_image_d">o arrástrala aquí · JPG, PNG, WEBP · se procesa solo en tu dispositivo</span>
+    </label>
+    <label class="btn camera-btn">
+      <input type="file" id="fileCamera" accept="image/*" capture="environment" class="sr-only">
+      <span data-icon="camera"></span><span data-i18n="take_photo">Tomar foto</span>
+    </label>
+    <p class="tip mono" data-i18n="tip_image">Consejo: fotos de cerca, con buen contraste y fondo simple dan mejores resultados.</p>
+  </div>
+
+  <div id="cStep2" class="cstep" hidden>
+    <div class="design">
+      <div class="stage">
+        <div class="seg" id="viewModes" role="group">
+          <button type="button" data-view="photo" data-i18n="view_photo">Foto</button>
+          <button type="button" data-view="split" data-i18n="view_split">Comparar</button>
+          <button type="button" data-view="threads" data-i18n="view_threads">Hilos</button>
+        </div>
+        <div class="canvas-box" id="canvasBox"><canvas id="editCanvas"></canvas></div>
+        <div class="term mono" id="genLog" aria-live="polite"></div>
+        <div class="bar"><i id="genBar"></i></div>
+        <p class="hint mono" data-i18n="hint_canvas">Arrastra para mover · rueda o pellizco para zoom · arrastra la barra para comparar foto e hilos</p>
+      </div>
+      <div class="ctrl">
+        <div class="tabs" id="designTabs" role="tablist">
+          <button type="button" role="tab" data-tab="frame" data-i18n="tab_frame">Encuadre</button>
+          <button type="button" role="tab" data-tab="thread" data-i18n="tab_thread">Hilo</button>
+          <button type="button" role="tab" data-tab="colors" data-i18n="tab_colors">Colores</button>
+          <button type="button" role="tab" data-tab="size" data-i18n="tab_size">Medidas</button>
+          <button type="button" role="tab" data-tab="adv" data-i18n="tab_adv">Avanzado</button>
+        </div>
+        <div class="tabpanel" data-panel="frame" id="pFrame"></div>
+        <div class="tabpanel" data-panel="thread" id="pThread" hidden></div>
+        <div class="tabpanel" data-panel="colors" id="pColors" hidden></div>
+        <div class="tabpanel" data-panel="size" id="pSize" hidden></div>
+        <div class="tabpanel" data-panel="adv" id="pAdv" hidden></div>
+      </div>
+    </div>
+    <div class="stats" id="liveStats"></div>
+    <div class="actions sticky">
+      <button type="button" class="btn" id="btnBack1"><span data-icon="left"></span><span data-i18n="b_back_image">Imagen</span></button>
+      <button type="button" class="btn primary" id="btnToSeal"><span data-i18n="b_next">Siguiente</span><span data-icon="right"></span></button>
+    </div>
+  </div>
+
+  <div id="cStep3" class="cstep" hidden>
+    <div class="panel">
+      <label class="lbl" for="projName" data-i18n="proj_name">Nombre del proyecto</label>
+      <input type="text" id="projName" class="inp" maxlength="60" autocomplete="off" spellcheck="false" data-i18n-ph="proj_name_ph">
+      <fieldset class="modes">
+        <legend class="lbl" data-i18n="mode">¿Cómo se va a tejer?</legend>
+        <label class="mode-card">
+          <input type="radio" name="mode" value="normal" checked>
+          <span class="mc-i" data-icon="eye"></span>
+          <span class="mc-t" data-i18n="mode_normal">Normal</span>
+          <span class="mc-d mono" data-i18n="mode_normal_d"></span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="mode" value="surprise">
+          <span class="mc-i" data-icon="eyeoff"></span>
+          <span class="mc-t" data-i18n="mode_surprise">Sorpresa</span>
+          <span class="mc-d mono" data-i18n="mode_surprise_d"></span>
+        </label>
+      </fieldset>
+      <div class="pw-box">
+        <label class="lbl" for="pw1"><span data-icon="lock"></span> <span data-i18n="pw">Contraseña (opcional, recomendada)</span></label>
+        <input type="password" id="pw1" class="inp" autocomplete="new-password" maxlength="128">
+        <input type="password" id="pw2" class="inp" autocomplete="new-password" maxlength="128" data-i18n-ph="pw2_ph">
+        <div class="meter"><i id="pwMeter"></i></div>
+        <p class="mono small" id="pwMsg"></p>
+        <p class="mono small muted" data-i18n="pw_hint"></p>
+      </div>
+      <label class="check"><input type="checkbox" id="optDownload" checked><span data-i18n="opt_download">Descargar el archivo .hilo al terminar</span></label>
+    </div>
+    <div class="actions sticky">
+      <button type="button" class="btn" id="btnBack2"><span data-icon="left"></span><span data-i18n="b_back_design">Diseño</span></button>
+      <button type="button" class="btn primary" id="btnGenerate"><span data-icon="save"></span><span data-i18n="b_generate">Generar y guardar</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTADO ============ -->
+<section id="scr-result" class="screen" hidden>
+  <h2 class="title" id="resTitle"></h2>
+  <div class="sealed panel" id="resSealed" hidden>
+    <span class="sealed-i" data-icon="lock"></span>
+    <h3 data-i18n="sealed_t">Sorpresa sellada</h3>
+    <p class="mono" data-i18n="sealed_d"></p>
+  </div>
+  <div class="res-canvas" id="resCanvasBox"><canvas id="resCanvas"></canvas></div>
+  <div class="stats" id="resStats"></div>
+  <div class="panel" id="resPlanBox">
+    <h3 class="panel-t" data-i18n="r_plan">Plan de colores</h3>
+    <ol class="plan mono" id="resPlan"></ol>
+  </div>
+  <div class="actions wrap">
+    <button type="button" class="btn primary" id="btnStart"><span data-icon="play"></span><span data-i18n="r_start">Empezar a tejer</span></button>
+    <button type="button" class="btn" id="btnDlFile"><span data-icon="download"></span><span data-i18n="r_dl">Descargar .hilo</span></button>
+    <button type="button" class="btn" id="btnShare" hidden><span data-icon="share"></span><span data-i18n="r_share">Enviar a otro dispositivo</span></button>
+    <button type="button" class="btn" id="btnTemplate"><span data-icon="template"></span><span data-i18n="r_template">Plantilla de clavos (SVG)</span></button>
+    <button type="button" class="btn" id="btnSeq"><span data-icon="hash"></span><span data-i18n="r_seq">Ver números</span></button>
+    <button type="button" class="btn" id="btnJustDraw"><span data-icon="eye"></span><span data-i18n="r_draw">Solo dibujar</span></button>
+  </div>
+  <div class="panel" id="seqBox" hidden>
+    <p class="mono small muted" data-i18n="r_seq_hint"></p>
+    <textarea id="seqText" class="inp mono" rows="8" readonly spellcheck="false"></textarea>
+    <button type="button" class="btn small" id="btnCopySeq"><span data-icon="copy"></span><span data-i18n="r_copy">Copiar</span></button>
+  </div>
+</section>
+
+<!-- ============ MANUAL PASO A PASO ============ -->
+<section id="scr-manual" class="screen" hidden>
+  <div class="m-top">
+    <div class="m-name" id="mName"></div>
+    <div class="m-saved mono" id="mSaved"></div>
+  </div>
+  <div class="m-progress">
+    <div class="m-stepline"><span data-i18n="m_step">PASO</span> <b id="mStep">1</b> <span data-i18n="m_of">de</span> <span id="mTotal"></span> <span class="mono muted" id="mPct"></span></div>
+    <div class="m-bar" id="mBar"></div>
+  </div>
+  <div class="m-color" id="mColor"></div>
+  <div class="m-warn mono" id="mWarn" hidden></div>
+  <div class="m-main">
+    <div class="m-left">
+      <div class="m-big" id="mBig" role="button" tabindex="0">
+        <div class="m-from"><span class="mono" data-i18n="m_from">DESDE</span><b id="mFrom">0</b></div>
+        <div class="m-arrow" aria-hidden="true">»</div>
+        <div class="m-to"><span class="mono" data-i18n="m_to">HASTA</span><b id="mTo">0</b></div>
+      </div>
+      <p class="m-tap mono muted" data-i18n="m_tap">Toca los números para avanzar</p>
+      <div class="m-next mono" id="mNext"></div>
+      <div class="m-nav">
+        <button type="button" class="btn big" id="mPrev" data-i18n-aria="m_prev_btn"><span data-icon="left"></span></button>
+        <button type="button" class="btn big primary" id="mNextBtn"><span data-i18n="m_next_btn">Siguiente</span><span data-icon="right"></span></button>
+      </div>
+      <div class="m-tools">
+        <button type="button" class="btn small" id="mGo"><span data-icon="hash"></span><span data-i18n="m_go">Ir a paso</span></button>
+        <button type="button" class="btn small" id="mVoice" aria-pressed="false"><span data-icon="volume"></span><span data-i18n="m_voice">Voz</span></button>
+        <button type="button" class="btn small" id="mAuto" aria-pressed="false"><span data-icon="timer"></span><span data-i18n="m_auto">Manos libres</span></button>
+        <button type="button" class="btn small" id="mArt" aria-pressed="true"><span data-icon="eye"></span><span data-i18n="m_art">Ver avance</span></button>
+        <button type="button" class="btn small" id="mBackup"><span data-icon="download"></span><span data-i18n="m_backup">Respaldo</span></button>
+        <button type="button" class="btn small" id="mPlanBtn"><span data-icon="list"></span><span data-i18n="m_plan">Plan</span></button>
+      </div>
+      <p class="mono small muted m-keys" data-i18n="m_keys"></p>
+    </div>
+    <div class="m-ring" id="mRingBox">
+      <canvas id="mArtCanvas"></canvas>
+      <canvas id="mRingCanvas"></canvas>
+      <div class="m-hidden mono" id="mHidden" hidden><span data-icon="eyeoff"></span><span data-i18n="m_hidden"></span></div>
+    </div>
+  </div>
+  <div class="m-done panel" id="mDone" hidden>
+    <h2 data-i18n="m_done_t">¡Hilograma terminado!</h2>
+    <p class="mono" data-i18n="m_done_d"></p>
+    <button type="button" class="btn primary" id="mReveal"><span data-icon="eye"></span><span data-i18n="m_reveal">Revelar la sorpresa</span></button>
+  </div>
+</section>
+
+<!-- ============ ABRIR ============ -->
+<section id="scr-open" class="screen" hidden>
+  <h2 class="title" data-i18n="o_title">Abrir instrucciones</h2>
+  <label class="dropzone" id="dropHilo">
+    <input type="file" id="fileHilo" class="sr-only">
+    <span class="dz-icon" data-icon="upload"></span>
+    <span class="dz-t" data-i18n="o_pick">Toca para elegir el archivo .hilo</span>
+    <span class="dz-d mono" data-i18n="o_d"></span>
+  </label>
+</section>
+
+<!-- ============ PEGAR NUMEROS (opcion del original) ============ -->
+<section id="scr-paste" class="screen" hidden>
+  <h2 class="title" data-i18n="pa_title">Ya tengo los números</h2>
+  <p class="mono small" data-i18n="pa_d"></p>
+  <textarea id="pasteText" class="inp mono" rows="8" spellcheck="false" autocomplete="off"></textarea>
+  <div class="row">
+    <label class="lbl" for="pastePins" data-i18n="pa_pins">Número de clavos</label>
+    <input type="number" id="pastePins" class="inp short" min="24" max="1000" step="1" value="288" inputmode="numeric">
+  </div>
+  <div class="row">
+    <label class="lbl" for="pasteDiam" data-i18n="s_diam">Diámetro del marco (cm)</label>
+    <input type="number" id="pasteDiam" class="inp short" min="5" max="500" step="0.5" value="60" inputmode="decimal">
+  </div>
+  <div class="panel">
+    <h3 class="panel-t" data-i18n="pa_ex">Ejemplos del programa original</h3>
+    <div class="row wrap" id="pasteExamples"></div>
+    <p class="mono small muted" data-i18n="pa_ex_note"></p>
+  </div>
+  <div class="actions wrap">
+    <button type="button" class="btn primary" id="pasteStart"><span data-icon="play"></span><span data-i18n="r_start">Empezar a tejer</span></button>
+    <button type="button" class="btn" id="pasteDraw"><span data-icon="eye"></span><span data-i18n="r_draw">Solo dibujar</span></button>
+  </div>
+</section>
+
+<!-- ============ AJUSTES ============ -->
+<section id="scr-settings" class="screen" hidden>
+  <h2 class="title" data-i18n="se_title">Ajustes</h2>
+  <div class="panel">
+    <h3 class="panel-t" data-i18n="se_lang">Idioma</h3>
+    <div id="langChooser" class="lang-chooser"></div>
+  </div>
+  <div class="panel" id="prefsBox"></div>
+  <div class="panel">
+    <h3 class="panel-t"><span data-icon="shield"></span> <span data-i18n="se_sec_title">Seguridad y privacidad</span></h3>
+    <ul class="sec-list mono" id="secList"></ul>
+    <button type="button" class="btn danger" id="btnWipe"><span data-icon="trash"></span><span data-i18n="se_wipe">Borrar todos mis datos de este dispositivo</span></button>
+  </div>
+  <div class="panel">
+    <h3 class="panel-t" data-i18n="se_credits">Créditos</h3>
+    <ul class="credits mono small">
+      <li><span data-i18n="cr_1"></span> <a href="https://github.com/halfmonty/StringArtGenerator" target="_blank" rel="noopener noreferrer">github.com/halfmonty/StringArtGenerator</a></li>
+      <li data-i18n="cr_2"></li>
+      <li data-i18n="cr_3"></li>
+      <li data-i18n="cr_4"></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- ventana modal generica -->
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- aviso de cambio de color -->
+<div class="cc" id="ccOverlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="ccTitle">
+  <div class="cc-card">
+    <div class="cc-kicker mono" id="ccKicker"></div>
+    <div class="cc-swatch" id="ccSwatch"><span id="ccLetter"></span></div>
+    <h2 id="ccTitle"></h2>
+    <ol class="cc-steps" id="ccSteps"></ol>
+    <button type="button" class="btn primary big" id="ccOk"><span data-icon="check"></span><span data-i18n="cc_ok">Listo, continuar</span></button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
