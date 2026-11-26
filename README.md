@@ -62,6 +62,9 @@ necesario con las medidas reales del proyecto:
 - **tablero** recomendado (tamaño y grosor), **clavo o puntilla** (grosor × largo, cuánto se entierra) y
   **altura sobre el tablero**, calculada con el número real de vueltas de hilo que recibe cada clavo;
 - qué clavo va **arriba**, abajo y a la izquierda, para colgar el cuadro igual que la imagen;
+- **ilustraciones animadas** de los 12 pasos para armar el marco y de **cómo medir** cada distancia
+  (diámetro y radio, entre clavos, por el arco, ángulo, altura, grosor y clavo, tablero y margen,
+  comprobación e impresión al 100 %), con las medidas reales del proyecto;
 - esquema de frente y de lado, lista de **materiales** (con los metros de cada hilo) y **herramientas**,
   **12 pasos** numerados y una **tabla de comprobación** de distancias entre clavos;
 - **plantilla PDF a escala real** dividida en hojas Carta o A4, con cruces para unirlas, línea de corte y

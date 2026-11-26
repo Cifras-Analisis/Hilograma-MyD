@@ -37,8 +37,10 @@
       maxVisits = Math.ceil(lines / N * 2.5);
     }
     const heightMm = Math.min(30, Math.max(8, Math.round(maxVisits * sp.threadMm * 1.3 + 6)));
-    const embedMm = Math.round(thickMm * 0.66);
-    const nailMm = NAILS.find(x => x >= heightMm + embedMm) || 60;
+    // el clavo debe entrar al menos ~60 % del grosor y nunca atravesar el tablero (deja 2 mm)
+    const embedMin = Math.round(thickMm * 0.6), maxLen = heightMm + thickMm - 2;
+    const nailMm = NAILS.find(x => x >= heightMm + embedMin && x <= maxLen) || (heightMm + embedMin);
+    const embedMm = nailMm - heightMm;      // lo que queda dentro al clavar hasta la altura del bloque
     const spares = Math.ceil(N * 0.05) + 2;
     const bottom = Math.round(N / 4) % N, left = Math.round(N / 2) % N, top = Math.round(3 * N / 4) % N;
     const js = [1, 10, Math.round(N / 6), Math.round(N / 4), Math.round(N / 3), Math.floor(N / 2)]
@@ -87,7 +89,9 @@
       r: nice(c.r), d: nice(sp.pegMm), l: c.nailMm, h: c.heightMm, v: c.maxVisits, e: c.embedMm,
       c: I.fmt(c.chordCm, 2), arc: I.fmt(c.arcCm, 2), free: I.fmt(Math.max(0, c.freeMm), 1),
       a: I.fmt(c.angle, 3), q: I.fmt(c.perQuarter, c.quarter ? 0 : 1), top: c.top, b: c.bottom, l2: c.left,
-      color: colorWord(sp.bg), pages: T.pages, paper: paperName(pp), S: I.fmt(T.S / 10, 1), start: c.start
+      color: colorWord(sp.bg), pages: T.pages, paper: paperName(pp), S: I.fmt(T.S / 10, 1), start: c.start,
+      m: nice((c.boardCm - c.D) / 2), half: Math.floor(c.N / 2),
+      q4: nice(c.D * Math.abs(Math.sin(Math.PI * Math.round(c.N / 4) / c.N)))
     };
   }
   // {l} es el largo del clavo en casi todos los textos; en los pasos es el clavo de la izquierda
@@ -130,6 +134,13 @@
     ]));
     if (c.tight) body.appendChild(el('p', { class: 'note warn', text: t('s_spacing_warn') }));
     if (!c.quarter) body.appendChild(el('p', { class: 'note warn', text: t('fr_quarter_warn', { b: c.bottom, l: c.left, top: c.top }) }));
+
+    // ilustraciones animadas: armar el marco paso a paso y como medir cada distancia
+    if (root.HiloFrameAnim) {
+      const sec = section(t('fa_title'), 'play', [root.HiloFrameAnim.player(sp, c, v)]);
+      sec.classList.add('fr-anim');
+      body.appendChild(sec);
+    }
 
     const front = el('canvas', { class: 'fr-canvas', 'aria-label': t('fr_d_front') });
     const side = el('canvas', { class: 'fr-canvas side', 'aria-label': t('fr_d_side') });

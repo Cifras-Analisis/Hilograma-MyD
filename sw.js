@@ -3,11 +3,11 @@
  * conexion. Nunca guarda imagenes, proyectos ni datos del usuario, y nunca
  * intercepta peticiones a otros origenes. */
 'use strict';
-const VERSION = 'hmyd-v1.4.2';
+const VERSION = 'hmyd-v1.5.0';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/engine.js', 'js/storage.js', 'js/i18n.js', 'js/flags.js', 'js/ui.js', 'js/examples.js',
-  'js/frame.js', 'js/editor.js', 'js/manual.js', 'js/app.js', 'js/worker.js',
+  'js/frameanim.js', 'js/frame.js', 'js/editor.js', 'js/manual.js', 'js/app.js', 'js/worker.js',
   'fonts/Present.ttf', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'
 ];
 

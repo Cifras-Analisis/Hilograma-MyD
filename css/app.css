@@ -722,6 +722,20 @@ body.sheet-open { overflow: hidden; }
   .actions.sticky .btn:not(.primary) [data-i18n] { display: none; }
 }
 
+/* ---------- ilustraciones animadas del marco ---------- */
+.anim { display: grid; gap: 8px; }
+.anim-cv { width: 100%; aspect-ratio: 400 / 288; display: block; border-radius: 10px; border: 1px solid var(--line2); background: #010503; }
+.anim-ctrl { display: flex; align-items: center; gap: 8px; }
+.anim-ctrl .btn { min-width: 46px; }
+.anim-play { border-color: var(--cyan); color: var(--cyan); }
+.anim-count { margin-left: auto; font-size: 13px; color: var(--dim); }
+.anim-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.anim-dot { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; border: 1px solid var(--line2); background: rgba(0, 0, 0, 0.3); }
+.anim-dot.on { background: var(--neon); border-color: var(--neon); box-shadow: var(--glow); }
+.anim-t { margin: 4px 0 0; font-size: 26px; line-height: 1.25; color: var(--neon); }
+.anim-d { margin: 0; font-size: 13px; color: var(--fg); }
+@media print { .fr-anim { display: none !important; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
