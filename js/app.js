@@ -121,8 +121,26 @@
     })();
   }
 
+  function renderResume(list) {
+    const rb = clear($('resumeBox'));
+    const r = list.filter(p => (p.step | 0) > 0 && (p.step | 0) < (p.total | 0))
+      .sort((a, b) => (b.updated || 0) - (a.updated || 0))[0];
+    rb.hidden = !r;
+    if (!r) return;
+    const pct = Math.floor(r.step / r.total * 100);
+    const b = el('button', { type: 'button', class: 'resume' }, [
+      el('span', { class: 'rs-i' }, icon('play')),
+      el('span', { class: 'rs-t', text: t('home_resume_t') }),
+      el('span', { class: 'rs-d mono', text: t('home_resume_d', { name: St.cleanText(r.name, 60), step: I.fmt(r.step + 1), total: I.fmt(r.total), pct }) }),
+      el('span', { class: 'rs-go' }, icon('right'))
+    ]);
+    b.addEventListener('click', () => continueProject(r.id));
+    rb.appendChild(b);
+  }
+
   function renderProjects() {
     const list = St.list();
+    renderResume(list);
     const box = clear($('projectList'));
     $('projectEmpty').hidden = list.length > 0;
     list.forEach(p => {

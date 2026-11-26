@@ -47,6 +47,7 @@
 <section id="scr-home" class="screen">
   <pre class="boot mono" id="bootLog" aria-hidden="true"></pre>
   <h1 class="hero" data-i18n="home_title">Convierte una imagen en un hilograma</h1>
+  <div id="resumeBox" hidden></div>
   <p class="lead mono" data-i18n="home_lead">Clavos, hilo y números. Todo se calcula en tu dispositivo: tu imagen nunca sale de aquí.</p>
   <div class="home-grid">
     <button type="button" class="tile" id="goCreate">
@@ -231,16 +232,20 @@
           <div class="hf-head">
             <span class="hf-title" id="hfTitle"><span data-icon="timer"></span><span data-i18n="m_auto">Manos libres</span></span>
             <span class="hf-state mono" id="hfState" aria-live="polite"></span>
-            <button type="button" class="btn hf-x danger" id="hfStop" data-i18n-aria="hf_stop"><span data-icon="x"></span></button>
+            <button type="button" class="btn hf-exit" id="hfStop" data-i18n-aria="hf_stop"><span data-icon="x"></span><span data-i18n="hf_exit">Salir</span></button>
           </div>
           <div class="hf-bar"><i id="hfBar"></i></div>
-          <div class="hf-row">
+          <div class="hf-main">
+            <button type="button" class="btn hf-nav" id="hfBack" data-i18n-aria="m_prev_btn"><span data-icon="left"></span><span class="hf-lbl" data-i18n="hf_back">Atrás</span></button>
             <button type="button" class="btn hf-pause" id="hfPause"><span id="hfPauseIco" data-icon="pause"></span><span id="hfPauseTxt" data-i18n="hf_pause">Pausar</span></button>
-            <button type="button" class="btn hf-step" id="hfSlower" data-i18n-aria="hf_slower"><span data-icon="minus"></span></button>
-            <span class="hf-speed"><b id="hfSec">6</b><span class="mono" data-i18n="hf_per_step">s por paso</span></span>
-            <button type="button" class="btn hf-step" id="hfFaster" data-i18n-aria="hf_faster"><span data-icon="plus"></span></button>
+            <button type="button" class="btn hf-nav" id="hfFwd" data-i18n-aria="m_next_btn"><span class="hf-lbl" data-i18n="hf_fwd">Adelante</span><span data-icon="right"></span></button>
           </div>
-          <input type="range" id="hfRange" min="2" max="30" step="1" value="6" data-i18n-aria="hf_speed">
+          <div class="hf-speedrow">
+            <button type="button" class="btn hf-step" id="hfSlower" data-i18n-aria="hf_slower"><span data-icon="minus"></span></button>
+            <div class="hf-speed"><b id="hfSec">6</b><span class="mono" data-i18n="hf_per_step">s por paso</span></div>
+            <button type="button" class="btn hf-step" id="hfFaster" data-i18n-aria="hf_faster"><span data-icon="plus"></span></button>
+            <input type="range" id="hfRange" min="2" max="30" step="1" value="6" data-i18n-aria="hf_speed">
+          </div>
           <div class="hf-scale mono"><span data-i18n="hf_fast">2 s · rápido</span><span class="hf-rate" id="hfRate"></span><span data-i18n="hf_slow">30 s · lento</span></div>
         </div>
         <div class="m-nav">

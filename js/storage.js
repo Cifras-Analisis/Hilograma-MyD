@@ -265,10 +265,11 @@
   }
 
   function saveStep(id, step) {
-    lsSet('step.' + id, step);
+    const ok = lsSet('step.' + id, step) && lsGet('step.' + id) === step;
     const a = list();
     const e = a.find(x => x.id === id);
     if (e) { e.step = step; e.updated = Date.now(); lsSet('projects', a); }
+    return ok;
   }
 
   function exists(id) { return list().some(x => x.id === id); }

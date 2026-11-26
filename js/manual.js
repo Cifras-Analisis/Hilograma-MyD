@@ -16,7 +16,7 @@
   const HF = { on: false, paused: false, timer: 0, raf: 0, t0: 0, dur: 6000, remaining: 0 };
   let ccOpen = false;
   let cfg = null;              // { get: () => settings, set: (patch) => void }
-  let lastSaved = 0;
+  let lastSaved = 0, saveOk = true;
 
   const isOpen = () => !!P && !$('scr-manual').hidden;
 
@@ -221,16 +221,23 @@
     drawArt();
   }
 
-  function savedLabel() {
-    const d = new Date(lastSaved);
-    $('mSaved').textContent = t('m_saved', { time: d.toLocaleTimeString(I.flagInfo().num, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) });
+  function savedLabel(flash) {
+    const d = new Date(lastSaved), box = $('mSaved');
+    box.textContent = t('m_saved', {
+      step: I.fmt(Math.min(s + 1, total || 1)),
+      time: d.toLocaleTimeString(I.flagInfo().num, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    });
+    box.classList.toggle('fail', !saveOk);
+    if (flash) { box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash'); }
   }
 
+  // Guarda el avance en el dispositivo en CADA paso (y lo comprueba leyendolo de vuelta)
   function persist(forward) {
     P.step = s;
-    St.saveStep(P.id, s);
-    lastSaved = Date.now();
-    savedLabel();
+    const ok = St.saveStep(P.id, s);
+    if (ok) { lastSaved = Date.now(); saveOk = true; }
+    else if (saveOk) { saveOk = false; U.toast(t('e_save'), 'err'); }
+    savedLabel(ok);
     const every = Number(cfg.get().backupEvery) || 0;
     if (forward && every > 0 && s > 0 && s % every === 0) backup(true);
   }
@@ -317,9 +324,10 @@
     const box = $('mHF');
     box.hidden = !HF.on;
     $('mAuto').setAttribute('aria-pressed', String(HF.on));
-    if (!HF.on) return;
+    if (!HF.on) { root.document.body.classList.remove('hf-mode'); return; }
     const sec = hfSec();
     box.classList.toggle('paused', HF.paused);
+    root.document.body.classList.toggle('hf-mode', HF.on);
     $('hfSec').textContent = String(sec);
     $('hfRange').value = String(sec);
     $('hfPauseTxt').textContent = HF.paused ? t('hf_resume') : t('hf_pause');
@@ -444,10 +452,15 @@
     $('mArt').setAttribute('aria-pressed', String(showArt));
     $('mVoice').setAttribute('aria-pressed', String(!!cfg.get().voice));
     buildBar();
-    lastSaved = Date.now();
-    savedLabel();
+    lastSaved = Date.now(); saveOk = true;
+    savedLabel(false);
     render();
     hfStop();
+    // pide al navegador que no borre el almacenamiento (avance) por falta de espacio
+    try {
+      const sto = root.navigator.storage;
+      if (sto && sto.persist) sto.persisted().then(p => p || sto.persist()).catch(() => {});
+    } catch (e) { /* nada */ }
     if (cfg.get().wake !== false) U.keepAwake(true);
     if (s < total && s === idx.start[info(s).b] && !(opts && opts.quiet)) showColorChange(info(s));
   }
@@ -482,6 +495,8 @@
     });
     $('mAuto').addEventListener('click', () => { if (HF.on) hfStop(); else hfStart(); });
     $('hfPause').addEventListener('click', hfToggle);
+    $('hfBack').addEventListener('click', prev);
+    $('hfFwd').addEventListener('click', next);
     $('hfStop').addEventListener('click', hfStop);
     $('hfSlower').addEventListener('click', () => hfSetSpeed(hfSec() + 1));
     $('hfFaster').addEventListener('click', () => hfSetSpeed(hfSec() - 1));
