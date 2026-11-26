@@ -227,19 +227,68 @@
   const letter = k => String.fromCharCode(65 + k);
 
   /* ---------- voz ---------- */
+  // Elige la voz mas natural instalada. Por privacidad solo se usan voces del propio
+  // dispositivo (las voces "en linea" envian el texto a un servidor) salvo que el
+  // usuario las permita en Ajustes.
+  const voicePrefs = { name: '', online: false, rate: 1 };
+  let noVoiceWarned = false;
+  function setVoicePrefs(p) { Object.assign(voicePrefs, p || {}); noVoiceWarned = false; }
+  const normLang = l => String(l || '').replace('_', '-').toLowerCase();
+  function voiceScore(v, want) {
+    const n = String(v.name || '').toLowerCase(), lang = normLang(v.lang);
+    let s = 0;
+    if (/premium/.test(n)) s += 50;
+    if (/enhanced|mejorad|optimiz/.test(n)) s += 45;
+    if (/neural|natural/.test(n)) s += 40;
+    if (/siri/.test(n)) s += 35;
+    if (/google/.test(n)) s += 20;
+    if (/compact|espeak|robot/.test(n)) s -= 30;
+    if (lang === want) s += 15;
+    else if (want.slice(0, 2) === 'es' && /^es-(co|mx|us|419|ar|cl|pe|ve|ec)/.test(lang)) s += 10;
+    else if (lang.slice(0, 2) === want.slice(0, 2)) s += 5;
+    if (v.localService) s += 3;
+    if (v.default) s += 1;
+    return s;
+  }
+  function voices() {
+    const s = root.speechSynthesis;
+    if (!s) return [];
+    const want = normLang(I.flagInfo().speech);
+    return s.getVoices()
+      .filter(v => normLang(v.lang).slice(0, 2) === want.slice(0, 2) && (voicePrefs.online || v.localService !== false))
+      .sort((a, b) => voiceScore(b, want) - voiceScore(a, want));
+  }
+  function pickVoice() {
+    const list = voices();
+    if (voicePrefs.name) { const v = list.find(x => x.name === voicePrefs.name); if (v) return v; }
+    return list[0] || null;
+  }
+  function initVoices(onChange) {
+    const s = root.speechSynthesis;
+    if (!s) return;
+    try { s.getVoices(); } catch (e) { /* nada */ }
+    s.addEventListener('voiceschanged', () => { if (onChange) onChange(); });
+  }
   function speak(text) {
     const s = root.speechSynthesis;
-    if (!s || !root.SpeechSynthesisUtterance) return;
+    if (!s || !root.SpeechSynthesisUtterance) return false;
     try {
+      const v = pickVoice();
+      if (!v && s.getVoices().length) {
+        // no hay voz permitida para este idioma: no se usa una voz en linea a escondidas
+        if (!noVoiceWarned) { noVoiceWarned = true; toast(I.t('e_no_voice'), 'err'); }
+        return false;
+      }
       s.cancel();
       const u = new root.SpeechSynthesisUtterance(String(text));
-      u.lang = I.flagInfo().speech;
-      const voices = s.getVoices();
-      const v = voices.find(x => x.lang === u.lang) || voices.find(x => x.lang && x.lang.slice(0, 2) === u.lang.slice(0, 2));
+      u.lang = v ? v.lang : I.flagInfo().speech;
       if (v) u.voice = v;
-      u.rate = 1;
+      u.rate = Number(voicePrefs.rate) || 1;
+      u.pitch = 1;
+      u.volume = 1;
       s.speak(u);
-    } catch (e) { /* sin voz */ }
+      return true;
+    } catch (e) { return false; }
   }
 
   /* ---------- pantalla encendida ---------- */
@@ -312,6 +361,6 @@
   root.HiloUI = Object.freeze({
     $, el, clear, icon, hydrateIcons, toast, modal, confirmBox, askPassword, askNumber,
     download, shareFile, canShareFiles, luminance, inkFor, letter, speak, keepAwake, vibrate, beep,
-    debounce, scriptURL, guard, disarm, arm, bumpArm
+    debounce, scriptURL, guard, disarm, arm, bumpArm, voices, setVoicePrefs, initVoices
   });
 })(self);

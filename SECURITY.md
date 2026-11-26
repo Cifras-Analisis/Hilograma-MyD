@@ -16,6 +16,7 @@ Hilograma MyD está diseñado para que **esa imagen nunca salga del dispositivo*
 | Alguien abre el archivo sin permiso | Contraseña opcional: AES-256-GCM con clave derivada por PBKDF2-SHA256 (600 000 iteraciones, sal aleatoria de 16 bytes, IV de 12 bytes por archivo). El proyecto guardado en el dispositivo queda cifrado con la misma contraseña. La contraseña nunca se guarda. |
 | Clickjacking | La app se niega a ejecutarse dentro de un `iframe`; en servidores que lo permiten, `_headers` añade `frame-ancestors 'none'` y `X-Frame-Options: DENY`. |
 | Fuga por *Referer* | `<meta name="referrer" content="no-referrer">`. |
+| La voz envía los números a un servidor | Por defecto solo se usan voces del propio dispositivo (`localService`). Las voces en línea (más naturales en algunos computadores) son opcionales y Ajustes explica que envían los números de los clavos a ese servicio. |
 | Datos olvidados en un equipo compartido | Botón *Borrar todos mis datos* (proyectos, avance, ajustes, caché y service worker). |
 
 ## Límites conocidos / Known limits

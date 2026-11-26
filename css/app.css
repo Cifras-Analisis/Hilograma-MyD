@@ -563,7 +563,9 @@ body.hf-mode #mFrame, body.hf-mode .m-tools, body.hf-mode .m-keys, body.hf-mode 
 .credits li, .credits a, .sec-list li, .note, .tile-d, .dz-d { overflow-wrap: anywhere; }
 .prefs-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .prefs-row:last-child { border-bottom: 0; }
-.prefs-row select, .prefs-row input[type="number"] { width: auto; min-width: 120px; }
+.prefs-row select, .prefs-row input[type="number"] { width: auto; min-width: 120px; max-width: 100%; }
+.prefs-note { flex-basis: 100%; margin: 0; font-size: 12px; color: var(--dim); font-family: var(--mono); }
+.prefs-row.voice-row select { flex: 1 1 220px; }
 .switch { accent-color: var(--neon); width: 22px; height: 22px; }
 
 /* ---------- guia del marco ---------- */
@@ -711,11 +713,6 @@ body.sheet-open { overflow: hidden; }
 .guard.armed { cursor: default; }
 .guard.armed input[type="range"] { pointer-events: auto; opacity: 1; }
 .field.guard.armed { border-color: var(--neon); background: rgba(0, 255, 136, 0.06); box-shadow: var(--glow); }
-.fl-lock { display: inline-flex; color: var(--dim); font-size: 15px; }
-.fl-lock .is-unlock, .armed .fl-lock .is-lock { display: none; }
-.armed .fl-lock .is-unlock { display: inline-flex; }
-.armed .fl-lock { color: var(--neon); }
-.rguard.armed .fl-lock { color: var(--cyan); }
 
 /* ---------- barra inferior de los pasos (Imagen / Diseño / Generar): compacta ---------- */
 .actions.sticky .btn { min-height: 28px; padding: 2px 12px; font-size: 18px; line-height: 1.15; gap: 6px; white-space: nowrap; }

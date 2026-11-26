@@ -394,7 +394,7 @@
     hfSchedule(hfSec() * 1000);
     // en pantallas angostas el panel queda fijo abajo: centra los numeros grandes por encima
     if (root.innerWidth < 900) root.requestAnimationFrame(() => $('mBig').scrollIntoView({ block: 'center', behavior: 'smooth' }));
-    U.speak(t('voice_step', { pin: info(s).to }));
+    U.speak(t('voice_start', { pin: info(s).to }));
   }
   function hfStop() {
     HF.on = false; HF.paused = false;

@@ -650,10 +650,7 @@
     range.addEventListener('change', () => apply(range.value, true));
     num.addEventListener('change', () => apply(num.value, true));
     fields[key] = { set: () => { set(get()); mark(); } };
-    const lab = el('label', { for: id }, [
-      el('span', { i18n: labelKey }),
-      el('span', { class: 'fl-lock', title: t('g_tap'), 'data-i18n-aria': 'g_tap' }, [icon('lock', 'is-lock'), icon('unlock', 'is-unlock')])
-    ]);
+    const lab = el('label', { for: id, title: t('g_tap') }, el('span', { i18n: labelKey }));
     const box = el('div', { class: 'field' }, [lab, num, range, help]);
     U.guard(box, [range, num]);
     return box;

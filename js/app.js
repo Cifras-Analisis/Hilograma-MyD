@@ -385,6 +385,33 @@
     [0, 100, 250, 500, 1000].forEach(n => bk.appendChild(el('option', { value: n, text: n ? t('se_every', { n }) : t('se_never'), selected: Number(settings.backupEvery) === n })));
     bk.addEventListener('change', () => cfg.set({ backupEvery: Number(bk.value) }));
     pb.appendChild(row('se_voice', voice));
+    // voz: la mas natural del dispositivo, o la que elija el usuario
+    const vs = el('select', { class: 'inp', 'aria-label': t('se_voice_pick') });
+    vs.appendChild(el('option', { value: '', text: t('se_voice_auto'), selected: !settings.voiceName }));
+    U.voices().forEach(v => vs.appendChild(el('option', {
+      value: v.name, selected: settings.voiceName === v.name,
+      text: v.name + ' (' + v.lang + ')' + (v.localService === false ? ' · ' + t('se_voice_online_tag') : '')
+    })));
+    const applyVoice = () => U.setVoicePrefs({ name: settings.voiceName || '', online: !!settings.voiceOnline, rate: Number(settings.voiceRate) || 1 });
+    vs.addEventListener('change', () => { cfg.set({ voiceName: vs.value }); applyVoice(); U.speak(t('voice_test')); });
+    const test = el('button', { type: 'button', class: 'btn small' }, [icon('volume'), el('span', { i18n: 'se_voice_test' })]);
+    test.addEventListener('click', () => U.speak(t('voice_test')));
+    pb.appendChild(el('div', { class: 'prefs-row voice-row' }, [el('label', { i18n: 'se_voice_pick' }), vs, test,
+      el('p', { class: 'prefs-note', text: t('se_voice_tip') })]));
+    const rate = el('select', { class: 'inp', 'aria-label': t('se_voice_rate') });
+    [[0.85, 'se_rate_slow'], [1, 'se_rate_normal'], [1.15, 'se_rate_fast']].forEach(([v, k]) =>
+      rate.appendChild(el('option', { value: v, text: t(k), selected: (Number(settings.voiceRate) || 1) === v })));
+    rate.addEventListener('change', () => { cfg.set({ voiceRate: Number(rate.value) }); applyVoice(); U.speak(t('voice_test')); });
+    pb.appendChild(row('se_voice_rate', rate));
+    const online = el('input', { type: 'checkbox', class: 'switch', checked: !!settings.voiceOnline, 'aria-label': t('se_voice_online') });
+    online.addEventListener('change', () => {
+      cfg.set({ voiceOnline: online.checked });
+      if (!online.checked && settings.voiceName && !U.voices().some(v => v.name === settings.voiceName && v.localService !== false)) cfg.set({ voiceName: '' });
+      applyVoice();
+      renderSettings();
+    });
+    pb.appendChild(el('div', { class: 'prefs-row' }, [el('label', { i18n: 'se_voice_online' }), online,
+      el('p', { class: 'prefs-note', text: t('se_voice_online_d') })]));
     pb.appendChild(row('se_handsfree', hf));
     pb.appendChild(row('se_wake', wake));
     pb.appendChild(row('se_backup', bk));
@@ -479,6 +506,8 @@
     }
     I.setLang(settings.lang, settings.flag);
     I.apply();
+    U.setVoicePrefs({ name: settings.voiceName || '', online: !!settings.voiceOnline, rate: Number(settings.voiceRate) || 1 });
+    U.initVoices(() => { if (screen === 'settings') renderSettings(); });
     U.hydrateIcons();
     langButton();
     ED.init({
