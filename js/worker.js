@@ -1,7 +1,16 @@
 /* Hilograma MyD - Web Worker de calculo. Solo recibe pixeles y parametros;
  * no hace peticiones de red ni guarda nada. */
 'use strict';
-importScripts('engine.js');
+// Con cabeceras CSP (Netlify, Cloudflare, tools/serve.py) el worker tambien exige
+// Trusted Types: solo se permite cargar nuestro propio engine.js.
+(function () {
+  const tt = self.trustedTypes && typeof self.trustedTypes.createPolicy === 'function'
+    ? self.trustedTypes.createPolicy('hilo', {
+      createScriptURL(u) { if (u === 'engine.js') return u; throw new TypeError('blocked script URL'); }
+    })
+    : null;
+  importScripts(tt ? tt.createScriptURL('engine.js') : 'engine.js');
+})();
 
 self.onmessage = function (e) {
   const msg = e.data;
