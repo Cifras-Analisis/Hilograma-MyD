@@ -103,6 +103,7 @@
     preview = null;
     const main = $('editCanvas');
     if (main) { main.getContext('2d').clearRect(0, 0, main.width, main.height); main.width = 0; main.height = 0; }
+    S = 0;   // el lienzo quedo en 0x0: obliga a recalcular su tamano con la siguiente imagen
   }
 
   function isMonoBW() {
@@ -159,9 +160,9 @@
     const box = $('canvasBox');
     const css = Math.max(200, box.clientWidth || 360);
     const s = Math.round(Math.min(1600, css * dpr()));
-    if (s !== S) {
+    const main = $('editCanvas');
+    if (s !== S || main.width !== s) {
       S = s;
-      const main = $('editCanvas');
       main.width = S; main.height = S;
       return true;
     }
