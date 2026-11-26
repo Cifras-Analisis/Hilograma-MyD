@@ -168,6 +168,12 @@
 <!-- ============ RESULTADO ============ -->
 <section id="scr-result" class="screen" hidden>
   <h2 class="title" id="resTitle"></h2>
+  <button type="button" class="frame-cta" id="btnFrame">
+    <span class="fc-i" data-icon="template"></span>
+    <span class="fc-t" data-i18n="fr_open">Cómo hacer el marco</span>
+    <span class="fc-d mono" data-i18n="fr_cta_d"></span>
+    <span class="fc-go" data-icon="right"></span>
+  </button>
   <div class="sealed panel" id="resSealed" hidden>
     <span class="sealed-i" data-icon="lock"></span>
     <h3 data-i18n="sealed_t">Sorpresa sellada</h3>
@@ -183,7 +189,6 @@
     <button type="button" class="btn primary" id="btnStart"><span data-icon="play"></span><span data-i18n="r_start">Empezar a tejer</span></button>
     <button type="button" class="btn" id="btnDlFile"><span data-icon="download"></span><span data-i18n="r_dl">Descargar .hilo</span></button>
     <button type="button" class="btn" id="btnShare" hidden><span data-icon="share"></span><span data-i18n="r_share">Enviar a otro dispositivo</span></button>
-    <button type="button" class="btn" id="btnFrame"><span data-icon="template"></span><span data-i18n="fr_open">Guía del marco</span></button>
     <button type="button" class="btn" id="btnSeq"><span data-icon="hash"></span><span data-i18n="r_seq">Ver números</span></button>
     <button type="button" class="btn" id="btnJustDraw"><span data-icon="eye"></span><span data-i18n="r_draw">Solo dibujar</span></button>
   </div>
@@ -200,6 +205,12 @@
     <div class="m-name" id="mName"></div>
     <div class="m-saved mono" id="mSaved"></div>
   </div>
+  <button type="button" class="frame-cta" id="mFrame">
+    <span class="fc-i" data-icon="template"></span>
+    <span class="fc-t" data-i18n="fr_open">Cómo hacer el marco</span>
+    <span class="fc-d mono" data-i18n="fr_cta_d"></span>
+    <span class="fc-go" data-icon="right"></span>
+  </button>
   <div class="m-progress">
     <div class="m-stepline"><span data-i18n="m_step">PASO</span> <b id="mStep">1</b> <span data-i18n="m_of">de</span> <span id="mTotal"></span> <span class="mono muted" id="mPct"></span></div>
     <div class="m-bar" id="mBar"></div>
@@ -215,9 +226,27 @@
       </div>
       <p class="m-tap mono muted" data-i18n="m_tap">Toca los números para avanzar</p>
       <div class="m-next mono" id="mNext"></div>
-      <div class="m-nav">
-        <button type="button" class="btn big" id="mPrev" data-i18n-aria="m_prev_btn"><span data-icon="left"></span></button>
-        <button type="button" class="btn big primary" id="mNextBtn"><span data-i18n="m_next_btn">Siguiente</span><span data-icon="right"></span></button>
+      <div class="m-dock">
+        <div class="hf" id="mHF" hidden role="group" aria-labelledby="hfTitle">
+          <div class="hf-head">
+            <span class="hf-title" id="hfTitle"><span data-icon="timer"></span><span data-i18n="m_auto">Manos libres</span></span>
+            <span class="hf-state mono" id="hfState" aria-live="polite"></span>
+            <button type="button" class="btn hf-x danger" id="hfStop" data-i18n-aria="hf_stop"><span data-icon="x"></span></button>
+          </div>
+          <div class="hf-bar"><i id="hfBar"></i></div>
+          <div class="hf-row">
+            <button type="button" class="btn hf-pause" id="hfPause"><span id="hfPauseIco" data-icon="pause"></span><span id="hfPauseTxt" data-i18n="hf_pause">Pausar</span></button>
+            <button type="button" class="btn hf-step" id="hfSlower" data-i18n-aria="hf_slower"><span data-icon="minus"></span></button>
+            <span class="hf-speed"><b id="hfSec">6</b><span class="mono" data-i18n="hf_per_step">s por paso</span></span>
+            <button type="button" class="btn hf-step" id="hfFaster" data-i18n-aria="hf_faster"><span data-icon="plus"></span></button>
+          </div>
+          <input type="range" id="hfRange" min="2" max="30" step="1" value="6" data-i18n-aria="hf_speed">
+          <div class="hf-scale mono"><span data-i18n="hf_fast">2 s · rápido</span><span class="hf-rate" id="hfRate"></span><span data-i18n="hf_slow">30 s · lento</span></div>
+        </div>
+        <div class="m-nav">
+          <button type="button" class="btn big" id="mPrev" data-i18n-aria="m_prev_btn"><span data-icon="left"></span></button>
+          <button type="button" class="btn big primary" id="mNextBtn"><span data-i18n="m_next_btn">Siguiente</span><span data-icon="right"></span></button>
+        </div>
       </div>
       <div class="m-tools">
         <button type="button" class="btn small" id="mGo"><span data-icon="hash"></span><span data-i18n="m_go">Ir a paso</span></button>
@@ -226,7 +255,6 @@
         <button type="button" class="btn small" id="mArt" aria-pressed="true"><span data-icon="eye"></span><span data-i18n="m_art">Ver avance</span></button>
         <button type="button" class="btn small" id="mBackup"><span data-icon="download"></span><span data-i18n="m_backup">Respaldo</span></button>
         <button type="button" class="btn small" id="mPlanBtn"><span data-icon="list"></span><span data-i18n="m_plan">Plan</span></button>
-        <button type="button" class="btn small" id="mFrame"><span data-icon="template"></span><span data-i18n="fr_open">Guía del marco</span></button>
       </div>
       <p class="mono small muted m-keys" data-i18n="m_keys"></p>
     </div>
@@ -330,6 +358,7 @@
     <h2 id="ccTitle"></h2>
     <ol class="cc-steps" id="ccSteps"></ol>
     <button type="button" class="btn primary big" id="ccOk"><span data-icon="check"></span><span data-i18n="cc_ok">Listo, continuar</span></button>
+    <button type="button" class="btn cc-frame" id="ccFrame" hidden><span data-icon="template"></span><span data-i18n="cc_frame">¿Aún no tienes el marco? Cómo hacerlo</span></button>
   </div>
 </div>
 

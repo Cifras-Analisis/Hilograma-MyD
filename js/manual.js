@@ -12,7 +12,8 @@
   let colorBefore = null;      // cm del mismo color antes de cada tramo
   let showArt = true, revealed = false;
   let artUpTo = 0, ring = null;
-  let autoTimer = 0;
+  // manos libres: on = activo, paused = en pausa, remaining = ms que faltan para el siguiente paso
+  const HF = { on: false, paused: false, timer: 0, raf: 0, t0: 0, dur: 6000, remaining: 0 };
   let ccOpen = false;
   let cfg = null;              // { get: () => settings, set: (patch) => void }
   let lastSaved = 0;
@@ -174,6 +175,8 @@
     $('mFrom').textContent = String(cur.from);
     $('mTo').textContent = String(cur.to);
     $('mBig').hidden = done;
+    $('mFrame').classList.toggle('compact', s > 0);
+    if (HF.on) hfUI();
     $('mDone').hidden = !done;
     $('mReveal').hidden = !(done && P.surprise && !revealed);
     $('mNextBtn').disabled = done;
@@ -243,15 +246,16 @@
     }
   }
 
-  function go(to, forward) {
+  function go(to, forward, fromAuto) {
     if (!P || ccOpen) return;
     const prev = s;
     s = Math.max(0, Math.min(total, to));
     if (s === prev) return;
     persist(forward);
     render();
+    if (!fromAuto) hfKick();
     if (s >= total) {
-      stopAuto();
+      hfStop();
       if (cfg.get().voice) U.speak(t('voice_done'));
       U.vibrate([80, 60, 80, 60, 200]);
       return;
@@ -282,6 +286,7 @@
     }
     ol.appendChild(el('li', { text: t('cc_s2', { color: cname(cur.c), letter: U.letter(cur.c) }) }));
     ol.appendChild(el('li', { text: t('cc_s3', { pin: cur.from }) }));
+    $('ccFrame').hidden = !first;
     ov.hidden = false;
     ccOpen = true;
     U.vibrate([200, 100, 200]);
@@ -293,18 +298,121 @@
     $('ccOverlay').hidden = true;
     ccOpen = false;
     if (cfg.get().voice && s < total) U.speak(t('voice_step', { pin: info(s).to }));
+    hfKick();
   }
 
   /* ---------- manos libres ---------- */
-  function startAuto() {
-    stopAuto();
-    const sec = Math.max(2, Math.min(60, Number(cfg.get().handsFreeSec) || 6));
-    autoTimer = setInterval(() => { if (!ccOpen && isOpen()) next(); }, sec * 1000);
-    $('mAuto').setAttribute('aria-pressed', 'true');
+  const HF_MIN = 2, HF_MAX = 30;
+  const hfSec = () => Math.max(HF_MIN, Math.min(HF_MAX, Math.round(Number(cfg.get().handsFreeSec) || 6)));
+  const now = () => root.performance.now();
+  // Espera (sin avanzar) mientras haya algo encima: cambio de color, ventana o guia del marco.
+  const hfBlocked = () => ccOpen || !isOpen() || !$('modal').hidden || !!(root.HiloFrame && root.HiloFrame.isOpen());
+
+  function hfDuration(sec) {
+    const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    return h ? h + ' h ' + String(m).padStart(2, '0') + ' min' : Math.max(1, m) + ' min';
   }
-  function stopAuto() {
-    clearInterval(autoTimer); autoTimer = 0;
-    $('mAuto').setAttribute('aria-pressed', 'false');
+
+  function hfUI() {
+    const box = $('mHF');
+    box.hidden = !HF.on;
+    $('mAuto').setAttribute('aria-pressed', String(HF.on));
+    if (!HF.on) return;
+    const sec = hfSec();
+    box.classList.toggle('paused', HF.paused);
+    $('hfSec').textContent = String(sec);
+    $('hfRange').value = String(sec);
+    $('hfPauseTxt').textContent = HF.paused ? t('hf_resume') : t('hf_pause');
+    clear($('hfPauseIco')).appendChild(U.icon(HF.paused ? 'play' : 'pause'));
+    $('hfPause').classList.toggle('primary', HF.paused);
+    $('hfSlower').disabled = sec >= HF_MAX;
+    $('hfFaster').disabled = sec <= HF_MIN;
+    $('hfRate').textContent = t('hf_rate', { n: I.fmt(60 / sec, 1), time: hfDuration(Math.max(0, total - s) * sec) });
+    hfDraw();
+  }
+
+  function hfDraw() {
+    if (!HF.on) return;
+    let rem = HF.remaining;
+    if (!HF.paused && HF.timer) rem = Math.max(0, HF.remaining - (now() - HF.t0));
+    const frac = HF.dur ? 1 - rem / HF.dur : 0;
+    $('hfBar').style.width = (Math.max(0, Math.min(1, frac)) * 100).toFixed(1) + '%';
+    let st;
+    if (HF.paused) st = t('hf_paused');
+    else if (ccOpen) st = t('hf_wait_cc');
+    else if (hfBlocked()) st = t('hf_paused');
+    else st = t('hf_next_in', { s: I.fmt(Math.ceil(rem / 100) / 10, 1) });
+    $('hfState').textContent = st;
+  }
+
+  function hfLoop() {
+    root.cancelAnimationFrame(HF.raf);
+    const step = () => {
+      if (!HF.on || HF.paused) { HF.raf = 0; hfDraw(); return; }
+      hfDraw();
+      HF.raf = root.requestAnimationFrame(step);
+    };
+    HF.raf = root.requestAnimationFrame(step);
+  }
+
+  function hfSchedule(ms) {
+    clearTimeout(HF.timer); HF.timer = 0;
+    if (!HF.on || HF.paused) { hfUI(); return; }
+    HF.dur = hfSec() * 1000;
+    HF.remaining = Math.min(ms, HF.dur);
+    HF.t0 = now();
+    HF.timer = setTimeout(hfTick, HF.remaining);
+    hfUI();
+    hfLoop();
+  }
+
+  function hfTick() {
+    HF.timer = 0;
+    if (!HF.on || HF.paused) return;
+    if (hfBlocked()) { HF.remaining = 0; HF.t0 = now(); HF.timer = setTimeout(hfTick, 400); return; }
+    go(s + 1, true, true);
+    if (!HF.on) return;                       // se termino el hilograma
+    if (ccOpen) { HF.remaining = 0; hfUI(); return; }   // espera a "Listo, continuar" (hfKick)
+    hfSchedule(hfSec() * 1000);
+  }
+
+  // Reinicia la cuenta completa: paso manual, cambio de color confirmado, nueva velocidad
+  function hfKick() { if (HF.on && !HF.paused) hfSchedule(hfSec() * 1000); else if (HF.on) hfUI(); }
+
+  function hfStart() {
+    if (s >= total) return;
+    if (!cfg.get().voice) { cfg.set({ voice: true }); $('mVoice').setAttribute('aria-pressed', 'true'); }
+    HF.on = true; HF.paused = false;
+    hfSchedule(hfSec() * 1000);
+    // en pantallas angostas el panel queda fijo abajo: centra los numeros grandes por encima
+    if (root.innerWidth < 900) root.requestAnimationFrame(() => $('mBig').scrollIntoView({ block: 'center', behavior: 'smooth' }));
+    U.speak(t('voice_step', { pin: info(s).to }));
+  }
+  function hfStop() {
+    HF.on = false; HF.paused = false;
+    clearTimeout(HF.timer); HF.timer = 0;
+    root.cancelAnimationFrame(HF.raf); HF.raf = 0;
+    hfUI();
+  }
+  function hfPause() {
+    if (!HF.on || HF.paused) return;
+    if (HF.timer) HF.remaining = Math.max(0, HF.remaining - (now() - HF.t0));
+    clearTimeout(HF.timer); HF.timer = 0;
+    HF.paused = true;
+    if (root.speechSynthesis) try { root.speechSynthesis.cancel(); } catch (e) { /* nada */ }
+    hfUI();
+  }
+  function hfResume() {
+    if (!HF.on || !HF.paused) return;
+    HF.paused = false;
+    hfSchedule(HF.remaining > 300 ? HF.remaining : hfSec() * 1000);
+  }
+  function hfToggle() { if (HF.paused) hfResume(); else hfPause(); }
+  function hfSetSpeed(sec) {
+    sec = Math.max(HF_MIN, Math.min(HF_MAX, Math.round(sec)));
+    cfg.set({ handsFreeSec: sec });
+    if (HF.on && !HF.paused) hfSchedule(sec * 1000);
+    else { HF.dur = sec * 1000; HF.remaining = Math.min(HF.remaining, HF.dur); hfUI(); }
   }
 
   /* ---------- plan de colores ---------- */
@@ -339,12 +447,13 @@
     lastSaved = Date.now();
     savedLabel();
     render();
+    hfStop();
     if (cfg.get().wake !== false) U.keepAwake(true);
     if (s < total && s === idx.start[info(s).b] && !(opts && opts.quiet)) showColorChange(info(s));
   }
 
   function leave() {
-    stopAuto();
+    hfStop();
     U.keepAwake(false);
     if (root.speechSynthesis) try { root.speechSynthesis.cancel(); } catch (e) { /* nada */ }
     $('ccOverlay').hidden = true; ccOpen = false;
@@ -371,11 +480,13 @@
       $('mVoice').setAttribute('aria-pressed', String(v));
       if (v && s < total) U.speak(t('voice_step', { pin: info(s).to }));
     });
-    $('mAuto').addEventListener('click', () => {
-      if (autoTimer) { stopAuto(); return; }
-      if (!cfg.get().voice) { cfg.set({ voice: true }); $('mVoice').setAttribute('aria-pressed', 'true'); }
-      startAuto();
-    });
+    $('mAuto').addEventListener('click', () => { if (HF.on) hfStop(); else hfStart(); });
+    $('hfPause').addEventListener('click', hfToggle);
+    $('hfStop').addEventListener('click', hfStop);
+    $('hfSlower').addEventListener('click', () => hfSetSpeed(hfSec() + 1));
+    $('hfFaster').addEventListener('click', () => hfSetSpeed(hfSec() - 1));
+    $('hfRange').addEventListener('input', () => hfSetSpeed(Number($('hfRange').value)));
+    $('ccFrame').addEventListener('click', () => { if (P) root.HiloFrame.open(root.HiloFrame.specFromProject(P)); });
     $('mArt').addEventListener('click', () => {
       showArt = !showArt;
       cfg.set({ showArt });
@@ -398,10 +509,12 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeColorChange(); }
         return;
       }
+      if ((e.key === 'p' || e.key === 'P') && HF.on) { e.preventDefault(); hfToggle(); return; }
       if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
     });
     root.document.addEventListener('visibilitychange', () => {
+      if (root.document.visibilityState === 'hidden') hfPause();
       if (root.document.visibilityState === 'visible' && isOpen() && cfg.get().wake !== false) U.keepAwake(true);
     });
     root.addEventListener('resize', U.debounce(() => { if (isOpen()) { ring = null; render(); } }, 200));

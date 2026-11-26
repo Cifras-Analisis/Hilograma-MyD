@@ -359,8 +359,8 @@
     const row = (labelKey, control) => el('div', { class: 'prefs-row' }, [el('label', { i18n: labelKey }), control]);
     const voice = el('input', { type: 'checkbox', class: 'switch', checked: !!settings.voice, 'aria-label': t('se_voice') });
     voice.addEventListener('change', () => cfg.set({ voice: voice.checked }));
-    const hf = el('input', { type: 'number', class: 'inp short', min: 2, max: 60, step: 1, value: settings.handsFreeSec, 'aria-label': t('se_handsfree') });
-    hf.addEventListener('change', () => { const v = Math.min(60, Math.max(2, Math.round(Number(hf.value)) || 6)); hf.value = v; cfg.set({ handsFreeSec: v }); });
+    const hf = el('input', { type: 'number', class: 'inp short', min: 2, max: 30, step: 1, value: Math.min(30, settings.handsFreeSec), 'aria-label': t('se_handsfree') });
+    hf.addEventListener('change', () => { const v = Math.min(30, Math.max(2, Math.round(Number(hf.value)) || 6)); hf.value = v; cfg.set({ handsFreeSec: v }); });
     const wake = el('input', { type: 'checkbox', class: 'switch', checked: settings.wake !== false, 'aria-label': t('se_wake') });
     wake.addEventListener('change', () => cfg.set({ wake: wake.checked }));
     const bk = el('select', { class: 'inp', 'aria-label': t('se_backup') });

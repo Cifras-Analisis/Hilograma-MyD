@@ -374,9 +374,54 @@ textarea.inp { resize: vertical; font-size: 12px; }
 .m-next b { color: var(--fg); font-weight: normal; }
 .m-nav { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
 .m-nav .btn { min-width: 0; }
-@media (max-width: 899px) {
-  .m-nav { position: sticky; bottom: 0; z-index: 10; padding: 10px 0 calc(10px + var(--safe-b)); background: linear-gradient(to top, var(--bg) 75%, rgba(2, 8, 6, 0)); }
+@media (max-width: 899px) and (min-height: 600px) {
+  .m-dock { position: sticky; bottom: 0; z-index: 10; padding: 10px 0 calc(10px + var(--safe-b)); background: linear-gradient(to top, var(--bg) 82%, rgba(2, 8, 6, 0)); }
 }
+
+/* ---------- manos libres ---------- */
+.hf {
+  border: 1px solid var(--cyan); border-radius: 12px; padding: 6px 10px 4px; margin-bottom: 8px;
+  background: rgba(3, 16, 10, 0.96); box-shadow: 0 0 16px rgba(41, 231, 255, 0.22);
+}
+.hf.paused { border-color: var(--amber); box-shadow: 0 0 16px rgba(255, 176, 0, 0.3); }
+.hf-head { display: flex; align-items: center; gap: 8px; }
+.hf-head .hf-state { margin-left: auto; text-align: right; }
+.hf-x { flex: none; min-height: 30px; width: 30px; padding: 0; font-size: 15px; }
+.hf-title { display: inline-flex; align-items: center; gap: 6px; color: var(--cyan); font-size: 20px; white-space: nowrap; }
+.hf-state { font-size: 12px; color: var(--cyan); }
+.hf.paused .hf-state { color: var(--amber); font-weight: bold; letter-spacing: 0.1em; }
+.hf-bar { height: 5px; border-radius: 3px; background: #021a0f; overflow: hidden; margin: 4px 0 6px; }
+.hf-bar i { display: block; height: 100%; width: 0; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.hf.paused .hf-bar i { background: var(--amber); box-shadow: none; }
+.hf-row { display: flex; align-items: center; gap: 8px; }
+.hf-pause { flex: 1 1 auto; min-width: 0; min-height: 42px; font-size: 20px; padding: 4px 10px; gap: 6px; white-space: nowrap; overflow: hidden; }
+.hf-step { flex: none; width: 46px; min-height: 42px; padding: 0; font-size: 22px; }
+.hf-speed { flex: none; display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; min-width: 56px; }
+.hf-speed b { font-family: var(--mono); font-size: 24px; color: var(--fg); }
+.hf-speed span { font-size: 10px; color: var(--dim); }
+.hf input[type="range"] { width: 100%; height: 22px; margin: 2px 0 0; accent-color: var(--cyan); }
+.hf-scale { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--dim); }
+.hf-rate { color: var(--cyan); text-align: center; }
+
+/* ---------- boton "Como hacer el marco" ---------- */
+.frame-cta {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'i t g' 'i d g';
+  align-items: center; gap: 2px 12px; width: 100%; margin: 10px 0 12px; padding: 12px 14px;
+  text-align: left; cursor: pointer; color: var(--fg);
+  background: linear-gradient(135deg, rgba(41, 231, 255, 0.16), rgba(0, 255, 136, 0.06));
+  border: 1px solid var(--cyan); border-radius: 12px; box-shadow: 0 0 16px rgba(41, 231, 255, 0.25);
+  transition: box-shadow 0.15s, transform 0.05s;
+}
+.frame-cta:hover { box-shadow: 0 0 24px rgba(41, 231, 255, 0.5); }
+.frame-cta:active { transform: translateY(1px); }
+.fc-i { grid-area: i; font-size: 32px; color: var(--cyan); }
+.fc-t { grid-area: t; font-family: var(--brand); font-size: 30px; line-height: 1.2; color: var(--cyan); }
+.fc-d { grid-area: d; font-size: 12px; color: var(--dim); overflow-wrap: anywhere; }
+.fc-go { grid-area: g; font-size: 26px; color: var(--cyan); }
+.frame-cta.compact { grid-template-areas: 'i t g'; padding: 6px 12px; margin: 8px 0; }
+.frame-cta.compact .fc-d { display: none; }
+.frame-cta.compact .fc-t { font-size: 23px; }
+.frame-cta.compact .fc-i, .frame-cta.compact .fc-go { font-size: 22px; }
 .m-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .m-keys { margin-top: 10px; }
 .m-ring { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; }
@@ -411,6 +456,7 @@ textarea.inp { resize: vertical; font-size: 12px; }
 .cc h2 { font-size: 46px; line-height: 1.2; color: var(--fg); }
 .cc-steps { text-align: left; font-family: var(--mono); font-size: 15px; margin: 12px auto 18px; max-width: 44ch; display: grid; gap: 8px; }
 .cc-steps b { color: var(--neon); font-weight: normal; }
+.cc-frame { margin-top: 12px; width: 100%; font-size: 19px; border-color: var(--cyan); color: var(--cyan); white-space: normal; }
 
 /* ---------- modal y aviso ---------- */
 .modal { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.8); }
@@ -514,6 +560,13 @@ body.sheet-open { overflow: hidden; }
   .field .num { width: 78px; }
   .m-tools .btn.small { font-size: 17px; padding: 5px 9px; }
   .btn.big { font-size: 26px; padding: 10px 12px; }
+  .fc-t { font-size: 25px; }
+  .hf-pause { font-size: 16px; padding: 6px 8px; letter-spacing: 0.02em; }
+  .hf-row { gap: 6px; }
+  .hf-step { width: 36px; }
+  .hf-speed { min-width: 44px; }
+  .hf-speed b { font-size: 20px; }
+  .hf-title { font-size: 19px; }
   .actions .btn { padding: 8px 10px; }
   .panel { padding: 12px 10px; }
 }
