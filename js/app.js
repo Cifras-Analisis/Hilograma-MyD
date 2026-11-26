@@ -482,6 +482,7 @@
     U.hydrateIcons();
     langButton();
     ED.init({
+      cfg,
       onFinish: async (project, keyInfo, wantDownload) => {
         if (wantDownload) await downloadFile(project, keyInfo);
         openResult(project, keyInfo, { animate: true });

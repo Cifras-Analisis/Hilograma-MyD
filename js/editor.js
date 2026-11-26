@@ -30,6 +30,7 @@
   let step = 1;
   let fields = {};
   let onFinish = null;
+  let mode = 'auto', autoStyle = 'classic', autoColorsN = 3, imgStats = null, runningKey = '', cfgApi = null;
 
   /* ================= imagen ================= */
   function isImageMagic(h) {
@@ -77,7 +78,9 @@
       if (src.close) src.close();
       wipeImage();
       img = { canvas: c, w: c.width, h: c.height, cx: c.width / 2, cy: c.height / 2, vis: Math.min(c.width, c.height), rot: 0 };
+      if (mode === 'auto') { applyAuto(); autoLevels(); }
       goStep(2);
+      if (mode === 'auto') { buildPanels(); if (autoStyle === 'color') suggestColors(autoColorsN); }
       syncZoomField();
       refreshPhoto();
       startGen();
@@ -100,7 +103,7 @@
     }
     [dispPhoto, dispSim].forEach(c => { if (c) { c.width = 0; c.height = 0; } });
     dispPhoto = null; dispSim = null;
-    preview = null;
+    preview = null; imgStats = null;
     const main = $('editCanvas');
     if (main) { main.getContext('2d').clearRect(0, 0, main.width, main.height); main.width = 0; main.height = 0; }
     S = 0;   // el lienzo quedo en 0x0: obliga a recalcular su tamano con la siguiente imagen
@@ -413,15 +416,18 @@
     if (!img) return;
     const key = paramsKey();
     if (preview && preview.key === key) return;
+    if (running && runningKey === key) return;
     cancelGen();
     const my = job;
     const input = {
       rgba: computeWorking(), size: D.size, nPins: D.nPins, lines: D.lines, weight: D.weight,
       minDist: D.minDist, minLoop: D.minLoop, rounds: D.rounds, bg: D.bg, colors: D.colors.map(c => c.hex)
     };
+    imgStats = measureImage(input.rgba, D.size);
     liveColors = input.colors.slice();
     preview = null;
     running = true;
+    runningKey = key;
     genPct = 0;
     genT0 = root.performance.now();
     resetSim(D.nPins);
@@ -574,6 +580,11 @@
         el('span', null, [t('s_spacing', { cm: I.fmt(sp.cm, 2), deg: I.fmt(sp.deg, 2) })])
       ]));
     }
+    const warn = imageWarning();
+    if (warn) box.insertBefore(el('p', { class: 'note warn', text: warn }), box.firstChild);
+    box.appendChild(densityBox());
+    const qs = $('qSummary');
+    if (qs) qs.textContent = t('q_auto_sum', { pins: I.fmt(D.nPins), lines: I.fmt(D.lines), cm: I.fmt(sp.cm, 2) });
     const si = $('spacingInfo');
     if (si) {
       si.textContent = t('s_spacing', { cm: I.fmt(sp.cm, 2), deg: I.fmt(sp.deg, 2) }) + (sp.warn ? ' · ' + t('s_spacing_warn') : '');
@@ -711,6 +722,7 @@
 
   function colorsChanged() {
     buildColorsPanel();
+    buildQuickPanel();
     refreshPhoto();
     startGenSoon();
     updateStats();
@@ -810,6 +822,249 @@
     if (out.length) { D.colors = out.slice(0, E.LIMITS.maxColors); colorsChanged(); }
   }
 
+  /* ================= modo automatico ================= */
+  // Densidad objetivo: (metros de hilo x grosor) / area del circulo. ~1 = equilibrio
+  // entre detalle y claridad; por encima de 1,25 el hilograma empieza a oscurecerse.
+  const COVER_TARGET = 1.0;
+  const AVG_CHORD = 0.82;          // largo medio de una linea / diametro (medido con el algoritmo)
+  const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  function autoPins(diam) { return clampN(Math.round(Math.PI * diam * 10 / 6.55 / 4) * 4, 120, 360); }
+  function autoLines(diam, threadMm) {
+    const L = COVER_TARGET * Math.PI * diam / (4 * AVG_CHORD * (threadMm / 10));
+    return clampN(Math.round(L / 50) * 50, 600, 6000);
+  }
+  function applyAuto() {
+    D.nPins = autoPins(D.diameterCm);
+    D.lines = autoLines(D.diameterCm, D.threadMm);
+    D.weight = DEFAULTS.weight; D.minDist = DEFAULTS.minDist; D.minLoop = DEFAULTS.minLoop; D.size = DEFAULTS.size;
+    D.rounds = DEFAULTS.rounds;
+  }
+
+  // Brillo y contraste automaticos: estira el histograma y aclara si la imagen es oscura.
+  function autoLevels() {
+    if (!img) return;
+    D.bright = 0; D.contrast = 0; D.sat = 100;
+    const size = D.size, r = size / 2, rgba = computeWorking();
+    const hist = new Uint32Array(256);
+    let n = 0;
+    for (let y = 0; y < size; y += 2) for (let x = 0; x < size; x += 2) {
+      if ((x - r) * (x - r) + (y - r) * (y - r) > r * r) continue;
+      const i = (y * size + x) * 4;
+      hist[(0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2]) | 0]++; n++;
+    }
+    rgba.fill(0);
+    if (!n) return;
+    const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * n) return v; } return 255; };
+    const lo = pct(0.02), hi = pct(0.98), med = pct(0.5);
+    let f = hi - lo > 12 ? 235 / (hi - lo) : 1;
+    f = clampN(f, 0.8, 2.2);
+    let Cs = Math.round(255 * 259 * (f - 1) / (259 + 255 * f) / 2.55);
+    Cs = clampN(Cs, -30, 70);
+    const C = Cs * 2.55;
+    f = (259 * (C + 255)) / (255 * (259 - C));
+    let b = 12 - 128 - f * (lo - 128);
+    const mid = f * (med - 128) + 128 + b;
+    if (mid < 118) b += (118 - mid) * 0.7;          // imagen oscura: aclara los tonos medios
+    D.contrast = Cs;
+    D.bright = clampN(Math.round(b / 1.28), -60, 60);
+  }
+
+  const STYLES = [
+    { id: 'classic', name: 'q_classic', desc: 'q_classic_d', bg: '#ffffff', colors: ['#000000'] },
+    { id: 'inverse', name: 'q_inverse', desc: 'q_inverse_d', bg: '#000000', colors: ['#ffffff'] },
+    { id: 'color', name: 'q_color', desc: 'q_color_d', bg: '#ffffff', colors: ['#c8102e', '#1f4fbf', '#000000'] },
+    { id: 'custom', name: 'q_custom', desc: 'q_custom_d', bg: null, colors: null }
+  ];
+
+  function setStyle(id) {
+    autoStyle = id;
+    const st = STYLES.find(x => x.id === id);
+    if (id === 'classic' || id === 'inverse') {
+      D.bg = st.bg; D.colors = st.colors.map(h => ({ hex: h, name: '' }));
+    } else if (id === 'color') {
+      D.bg = '#ffffff';
+      applyAuto();
+      if (img) { suggestColors(autoColorsN); return; }
+      D.colors = st.colors.map(h => ({ hex: h, name: '' }));
+    }
+    applyAuto();
+    colorsChanged();
+  }
+
+  function quickChip(label, on, onClick, extraClass) {
+    const b = el('button', { type: 'button', class: 'qchip' + (on ? ' on' : '') + (extraClass ? ' ' + extraClass : ''), 'aria-pressed': String(!!on) }, label);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function stylePreview(bg, colors) {
+    const box = el('span', { class: 'qs-prev' });
+    box.style.background = bg;
+    colors.slice(0, 4).forEach(h => { const d = el('i'); d.style.background = h; box.appendChild(d); });
+    return box;
+  }
+
+  function buildQuickPanel() {
+    const p = clear($('pQuick'));
+    p.appendChild(el('p', { class: 'note', i18n: 'q_auto_note' }));
+
+    // 1. estilo de color
+    p.appendChild(el('div', { class: 'lbl', i18n: 'q_style' }));
+    const grid = el('div', { class: 'qstyles' });
+    STYLES.forEach(st => {
+      const bg = st.bg || D.bg, cols = st.colors || D.colors.map(c => c.hex);
+      const showCols = st.id === autoStyle ? D.colors.map(c => c.hex) : cols;
+      const b = el('button', { type: 'button', class: 'qs' + (autoStyle === st.id ? ' on' : ''), 'aria-pressed': String(autoStyle === st.id) }, [
+        stylePreview(st.id === autoStyle ? D.bg : bg, showCols),
+        el('span', { class: 'qs-t', i18n: st.name }),
+        el('span', { class: 'qs-d mono', i18n: st.desc })
+      ]);
+      b.addEventListener('click', () => setStyle(st.id));
+      grid.appendChild(b);
+    });
+    p.appendChild(grid);
+
+    if (autoStyle === 'color') {
+      p.appendChild(el('div', { class: 'lbl', i18n: 'q_ncolors' }));
+      const row = el('div', { class: 'qchips' });
+      [2, 3, 4].forEach(k => row.appendChild(quickChip(String(k), autoColorsN === k, () => { autoColorsN = k; applyAuto(); suggestColors(k); })));
+      p.appendChild(row);
+    } else if (autoStyle === 'custom') {
+      p.appendChild(el('div', { class: 'lbl', i18n: 'q_board' }));
+      const bgRow = el('div', { class: 'swatches' });
+      I.BOARDS.forEach(b => bgRow.appendChild(swatch(b[0], D.bg === b[0], I.lang === 'es' ? b[1] : b[2], () => { D.bg = b[0]; colorsChanged(); })));
+      p.appendChild(bgRow);
+      p.appendChild(el('div', { class: 'lbl', i18n: 'q_threads' }));
+      const tRow = el('div', { class: 'swatches' });
+      I.THREADS.forEach(c => {
+        const on = D.colors.some(x => x.hex === c[0]);
+        const sw = swatch(c[0], on, I.lang === 'es' ? c[1] : c[2], () => {
+          if (on) { if (D.colors.length > 1) D.colors = D.colors.filter(x => x.hex !== c[0]); }
+          else if (D.colors.length < 4) D.colors.push({ hex: c[0], name: '' });
+          else { U.toast(t('q_max4')); return; }
+          applyAuto();
+          colorsChanged();
+        });
+        sw.setAttribute('aria-pressed', String(on));
+        tRow.appendChild(sw);
+      });
+      p.appendChild(tRow);
+    }
+
+    // 2. diametro
+    p.appendChild(el('div', { class: 'lbl', i18n: 'q_diam' }));
+    const drow = el('div', { class: 'qchips' });
+    [30, 40, 50, 60, 70, 80].forEach(v => drow.appendChild(quickChip(v + ' cm', D.diameterCm === v, () => setDiameter(v))));
+    const num = el('input', { type: 'number', class: 'inp short', min: 10, max: 200, step: 1, value: D.diameterCm, inputmode: 'decimal', 'aria-label': t('s_diam') });
+    num.addEventListener('change', () => { const v = Number(num.value); if (Number.isFinite(v)) setDiameter(clampN(Math.round(v * 2) / 2, 10, 200)); });
+    drow.appendChild(el('label', { class: 'qnum' }, [num, el('span', { class: 'mono', text: 'cm' })]));
+    p.appendChild(drow);
+
+    // 3. resumen automatico
+    p.appendChild(el('div', { class: 'qsum mono', id: 'qSummary' }));
+
+    // 4. pasar a avanzado
+    const adv = el('button', { type: 'button', class: 'btn small' }, [icon('menu'), el('span', { i18n: 'q_more' })]);
+    adv.addEventListener('click', () => setMode('advanced'));
+    p.appendChild(adv);
+  }
+
+  function setDiameter(v) {
+    D.diameterCm = v;
+    applyAuto();
+    Object.keys(fields).forEach(k => fields[k].set());
+    buildQuickPanel();
+    requestSimRedraw();
+    updateStats();
+    startGenSoon();
+  }
+
+  function setMode(m, quiet) {
+    mode = m === 'advanced' ? 'advanced' : 'auto';
+    if (cfgApi) cfgApi.set({ designMode: mode });
+    root.document.querySelectorAll('[data-mode]').forEach(b => {
+      const on = b.getAttribute('data-mode') === mode;
+      b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
+    });
+    $('pQuick').hidden = mode !== 'auto';
+    $('advBox').hidden = mode !== 'advanced';
+    if (quiet) return;
+    if (mode === 'auto') {
+      applyAuto();
+      if (img) { autoLevels(); refreshPhoto(); }
+    }
+    buildPanels();
+    if (img) startGenSoon();
+  }
+
+  /* ----- densidad del hilo y avisos ----- */
+  function coverageOf(src) {
+    const area = Math.PI * (D.diameterCm / 2) * (D.diameterCm / 2);
+    if (src && src.blocks) {
+      const st = E.threadStats(projectLike(src));
+      const cm = st.reduce((a, x) => a + x.chordCm, 0);
+      return { c: cm * (D.threadMm / 10) / area, est: false };
+    }
+    return { c: D.lines * AVG_CHORD * D.diameterCm * (D.threadMm / 10) / area, est: true };
+  }
+  function densityLevel(c) { return c < 0.6 ? 'light' : c < 1.25 ? 'ideal' : c < 1.6 ? 'high' : 'vhigh'; }
+
+  function densityBox() {
+    const cv = coverageOf(preview), lvl = densityLevel(cv.c);
+    const bar = el('i');
+    bar.style.width = (Math.min(1, cv.c / 2) * 100).toFixed(1) + '%';
+    const kids = [
+      el('div', { class: 'dn-head' }, [
+        el('span', { class: 'dn-t', i18n: 'dn_t' }),
+        el('b', { class: 'dn-l', text: t('dn_' + lvl) + (cv.est ? ' (' + t('dn_est') + ')' : '') })
+      ]),
+      el('div', { class: 'dn-meter' }, [bar, el('span', { class: 'dn-ideal' })]),
+      el('p', { class: 'mono small', text: t('dn_' + lvl + '_d') })
+    ];
+    if (mode === 'advanced' && (lvl === 'high' || lvl === 'vhigh' || lvl === 'light')) {
+      const fix = el('button', { type: 'button', class: 'btn small' }, [icon('wand'), el('span', { i18n: 'dn_fix' })]);
+      fix.addEventListener('click', () => {
+        D.lines = autoLines(D.diameterCm, D.threadMm);
+        if (fields.lines) fields.lines.set();
+        updateStats();
+        startGenSoon();
+      });
+      kids.push(fix);
+    }
+    return el('div', { class: 'density dn-' + lvl }, kids);
+  }
+
+  // Zonas que se llenaran de hilo: oscuras con hilo oscuro, claras con hilo claro.
+  function measureImage(rgba, size) {
+    const r = size / 2;
+    let n = 0, dark = 0, light = 0, sum = 0;
+    for (let y = 0; y < size; y += 3) for (let x = 0; x < size; x += 3) {
+      if ((x - r) * (x - r) + (y - r) * (y - r) > r * r) continue;
+      const i = (y * size + x) * 4;
+      const l = 0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2];
+      n++; sum += l; if (l < 70) dark++; if (l > 185) light++;
+    }
+    return n ? { mean: sum / n, dark: dark / n, light: light / n } : null;
+  }
+  function imageWarning() {
+    if (!imgStats) return null;
+    const lightBoard = U.luminance(D.bg) > 0.4;
+    if (lightBoard && (imgStats.dark > 0.35 || imgStats.mean < 95)) return t('w_dark', { pct: Math.round(imgStats.dark * 100) });
+    if (!lightBoard && (imgStats.light > 0.35 || imgStats.mean > 165)) return t('w_light', { pct: Math.round(imgStats.light * 100) });
+    return null;
+  }
+
+  function renderTips() {
+    const ul = $('tipsList');
+    if (!ul) return;
+    clear(ul);
+    t('tips').forEach(s => {
+      const i = s.indexOf(': ');
+      ul.appendChild(el('li', null, i > 0 ? [el('b', { text: s.slice(0, i + 1) }), ' ' + s.slice(i + 2)] : s));
+    });
+  }
+
   /* ================= pasos del asistente ================= */
   function goStep(n) {
     step = n;
@@ -904,6 +1159,10 @@
   /* ================= montaje ================= */
   function init(opts) {
     onFinish = opts.onFinish;
+    cfgApi = opts.cfg || null;
+    mode = cfgApi && cfgApi.get().designMode === 'advanced' ? 'advanced' : 'auto';
+    if (mode === 'auto') applyAuto();
+    root.document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.getAttribute('data-mode'))));
     const fi = $('fileImage'), fc = $('fileCamera'), dz = $('dropImage');
     fi.addEventListener('change', () => loadImageFile(fi.files && fi.files[0]));
     fc.addEventListener('change', () => loadImageFile(fc.files && fc.files[0]));
@@ -948,6 +1207,7 @@
     }, 200));
 
     buildPanels();
+    setMode(mode, true);
     setView('split');
   }
 
@@ -960,6 +1220,8 @@
   function buildPanels() {
     fields = {};
     buildFramePanel(); buildThreadPanel(); buildColorsPanel(); buildSizePanel(); buildAdvPanel();
+    buildQuickPanel();
+    renderTips();
     updateStats();
   }
 

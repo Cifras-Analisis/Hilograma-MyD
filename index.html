@@ -82,6 +82,19 @@
   </ol>
 
   <div id="cStep1" class="cstep">
+    <div class="mode-pick" id="modePick" role="radiogroup" data-i18n-aria="dm_title">
+      <button type="button" class="mp" data-mode="auto" role="radio">
+        <span class="mp-i" data-icon="wand"></span>
+        <span class="mp-t" data-i18n="dm_auto">Automático</span>
+        <span class="mp-tag mono" data-i18n="dm_rec">RECOMENDADO</span>
+        <span class="mp-d mono" data-i18n="dm_auto_d"></span>
+      </button>
+      <button type="button" class="mp" data-mode="advanced" role="radio">
+        <span class="mp-i" data-icon="menu"></span>
+        <span class="mp-t" data-i18n="dm_adv">Avanzado</span>
+        <span class="mp-d mono" data-i18n="dm_adv_d"></span>
+      </button>
+    </div>
     <label class="dropzone" id="dropImage">
       <input type="file" id="fileImage" accept="image/*" class="sr-only">
       <span class="dz-icon" data-icon="image"></span>
@@ -92,7 +105,10 @@
       <input type="file" id="fileCamera" accept="image/*" capture="environment" class="sr-only">
       <span data-icon="camera"></span><span data-i18n="take_photo">Tomar foto</span>
     </label>
-    <p class="tip mono" data-i18n="tip_image">Consejo: fotos de cerca, con buen contraste y fondo simple dan mejores resultados.</p>
+    <section class="panel tips">
+      <h3 class="panel-t"><span data-icon="image"></span><span data-i18n="tips_t">Consejos para elegir la imagen</span></h3>
+      <ul class="tips-list mono" id="tipsList"></ul>
+    </section>
   </div>
 
   <div id="cStep2" class="cstep" hidden>
@@ -109,6 +125,12 @@
         <p class="hint mono" data-i18n="hint_canvas">Arrastra para mover · rueda o pellizco para zoom · arrastra la barra para comparar foto e hilos</p>
       </div>
       <div class="ctrl">
+        <div class="seg mode-seg" role="radiogroup" data-i18n-aria="dm_title">
+          <button type="button" data-mode="auto" role="radio"><span data-icon="wand"></span> <span data-i18n="dm_auto">Automático</span></button>
+          <button type="button" data-mode="advanced" role="radio"><span data-icon="menu"></span> <span data-i18n="dm_adv">Avanzado</span></button>
+        </div>
+        <div class="quick" id="pQuick"></div>
+        <div id="advBox" hidden>
         <div class="tabs" id="designTabs" role="tablist">
           <button type="button" role="tab" data-tab="frame" data-i18n="tab_frame">Encuadre</button>
           <button type="button" role="tab" data-tab="thread" data-i18n="tab_thread">Hilo</button>
@@ -121,6 +143,7 @@
         <div class="tabpanel" data-panel="colors" id="pColors" hidden></div>
         <div class="tabpanel" data-panel="size" id="pSize" hidden></div>
         <div class="tabpanel" data-panel="adv" id="pAdv" hidden></div>
+        </div>
       </div>
     </div>
     <div class="stats" id="liveStats"></div>
