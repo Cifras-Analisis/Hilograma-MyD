@@ -501,6 +501,7 @@
     $('hfSlower').addEventListener('click', () => hfSetSpeed(hfSec() + 1));
     $('hfFaster').addEventListener('click', () => hfSetSpeed(hfSec() - 1));
     $('hfRange').addEventListener('input', () => hfSetSpeed(Number($('hfRange').value)));
+    U.guard($('hfRangeBox'), [$('hfRange')]);
     $('ccFrame').addEventListener('click', () => { if (P) root.HiloFrame.open(root.HiloFrame.specFromProject(P)); });
     $('mArt').addEventListener('click', () => {
       showArt = !showArt;

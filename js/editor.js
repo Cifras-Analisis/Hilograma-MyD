@@ -104,10 +104,13 @@
     [dispPhoto, dispSim].forEach(c => { if (c) { c.width = 0; c.height = 0; } });
     dispPhoto = null; dispSim = null;
     preview = null; imgStats = null;
+    if (photoArmedSafe()) U.disarm();
     const main = $('editCanvas');
     if (main) { main.getContext('2d').clearRect(0, 0, main.width, main.height); main.width = 0; main.height = 0; }
     S = 0;   // el lienzo quedo en 0x0: obliga a recalcular su tamano con la siguiente imagen
   }
+
+  function photoArmedSafe() { const b = $('canvasBox'); return !!(b && b.classList.contains('armed')); }
 
   function isMonoBW() {
     return D.colors.length === 1 && D.colors[0].hex === '#000000' && D.bg === '#ffffff';
@@ -317,6 +320,9 @@
   /* ================= gestos sobre la imagen ================= */
   const pointers = new Map();
   let gesture = null;
+  let tapStart = null;
+  // La foto empieza bloqueada (como las barras): un toque la desbloquea para moverla o acercarla.
+  const photoArmed = () => $('canvasBox').classList.contains('armed');
 
   function evXY(e) {
     const r = $('editCanvas').getBoundingClientRect();
@@ -326,11 +332,25 @@
   function onPointerDown(e) {
     if (!img) return;
     const cv = $('editCanvas');
-    cv.setPointerCapture(e.pointerId);
-    pointers.set(e.pointerId, evXY(e));
+    const p0 = evXY(e);
+    const nearSplit = view === 'split' && dispSim && Math.abs(p0.x - split * S) < 30 * dpr();
+    if (!photoArmed()) {
+      // bloqueada: solo se puede mover la barra de comparar; lo demas desplaza la pagina
+      if (nearSplit && pointers.size === 0) {
+        try { cv.setPointerCapture(e.pointerId); } catch (err) { /* puntero no capturable */ }
+        pointers.set(e.pointerId, p0);
+        gesture = { type: 'split', last: p0, moved: false };
+        e.preventDefault();
+        return;
+      }
+      tapStart = { x: e.clientX, y: e.clientY, t: root.performance.now(), id: e.pointerId };
+      return;
+    }
+    U.bumpArm();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) { /* puntero no capturable */ }
+    pointers.set(e.pointerId, p0);
     if (pointers.size === 1) {
-      const p = evXY(e);
-      const nearSplit = view === 'split' && dispSim && Math.abs(p.x - split * S) < 30 * dpr();
+      const p = p0;
       gesture = { type: nearSplit ? 'split' : 'pan', last: p, moved: false };
     } else if (pointers.size === 2) {
       const [a, b] = Array.from(pointers.values());
@@ -348,6 +368,7 @@
       requestCompose();
       return;
     }
+    if (gesture.type !== 'split') U.bumpArm();
     if (gesture.type === 'pan' && pointers.size === 1) {
       const dx = p.x - gesture.last.x, dy = p.y - gesture.last.y;
       gesture.last = p;
@@ -368,6 +389,11 @@
   }
 
   function onPointerUp(e) {
+    if (tapStart && tapStart.id === e.pointerId) {
+      const moved = Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y);
+      if (e.type === 'pointerup' && moved < 10 && root.performance.now() - tapStart.t < 700 && img) U.arm($('canvasBox'));
+      tapStart = null;
+    }
     pointers.delete(e.pointerId);
     if (gesture && pointers.size === 0) {
       const moved = gesture.moved && gesture.type !== 'split';
@@ -385,7 +411,8 @@
   }
 
   function onWheel(e) {
-    if (!img) return;
+    if (!img || !photoArmed()) return;     // bloqueada: la rueda desplaza la pagina
+    U.bumpArm();
     e.preventDefault();
     setVis(img.vis * Math.exp(e.deltaY * 0.0015), true);
     syncZoomField();
@@ -623,7 +650,13 @@
     range.addEventListener('change', () => apply(range.value, true));
     num.addEventListener('change', () => apply(num.value, true));
     fields[key] = { set: () => { set(get()); mark(); } };
-    return el('div', { class: 'field' }, [el('label', { for: id, i18n: labelKey }), num, range, help]);
+    const lab = el('label', { for: id }, [
+      el('span', { i18n: labelKey }),
+      el('span', { class: 'fl-lock', title: t('g_tap'), 'data-i18n-aria': 'g_tap' }, [icon('lock', 'is-lock'), icon('unlock', 'is-unlock')])
+    ]);
+    const box = el('div', { class: 'field' }, [lab, num, range, help]);
+    U.guard(box, [range, num]);
+    return box;
   }
 
   const HELP_KEYS = new Set(['zoom', 'bright', 'contrast', 'sat', 'threadMm', 'opacity', 'lines', 'weight', 'diameterCm',

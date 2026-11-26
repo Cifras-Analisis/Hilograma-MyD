@@ -3,7 +3,7 @@
  * conexion. Nunca guarda imagenes, proyectos ni datos del usuario, y nunca
  * intercepta peticiones a otros origenes. */
 'use strict';
-const VERSION = 'hmyd-v1.3.1';
+const VERSION = 'hmyd-v1.4.0';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/engine.js', 'js/storage.js', 'js/i18n.js', 'js/flags.js', 'js/ui.js', 'js/examples.js',

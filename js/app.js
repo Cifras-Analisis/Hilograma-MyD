@@ -491,6 +491,9 @@
     M.init(cfg);
     root.HiloFrame.init();
     wire();
+    const setTopbarH = () => doc.documentElement.style.setProperty('--topbar-h', doc.querySelector('.topbar').offsetHeight + 'px');
+    setTopbarH();
+    root.addEventListener('resize', U.debounce(setTopbarH, 150));
     show('home', false);
     boot(false);
     registerSW();

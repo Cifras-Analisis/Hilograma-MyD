@@ -77,6 +77,7 @@
     shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
     plus: 'M12 5v14M5 12h14',
     minus: 'M5 12h14',
+    unlock: 'M5 11h14v10H5zM8 11V7a4 4 0 0 1 7.7-1.5',
     x: 'M6 6l12 12M18 6L6 18',
     wand: 'M15 4V2M15 10V8M11 6h2M17 6h2M4 20L14 10M18 13l1.5 1.5M5.5 4.5L7 6',
     reset: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5',
@@ -271,6 +272,36 @@
     } catch (e) { /* nada */ }
   }
 
+  /* ---------- barras con candado: se toca el recuadro y luego se mueve la barra ---------- */
+  // Evita cambiar un valor por error al desplazar la pantalla con el dedo.
+  const GUARD_IDLE_MS = 10000;
+  let armedBox = null, armTimer = 0;
+  function disarm() {
+    clearTimeout(armTimer); armTimer = 0;
+    if (armedBox) { armedBox.classList.remove('armed'); armedBox = null; }
+  }
+  function bumpArm() { clearTimeout(armTimer); armTimer = setTimeout(disarm, GUARD_IDLE_MS); }
+  function arm(box) {
+    if (armedBox && armedBox !== box) armedBox.classList.remove('armed');
+    armedBox = box;
+    box.classList.add('armed');
+    bumpArm();
+  }
+  function guard(box, inputs) {
+    box.classList.add('guard');
+    box.addEventListener('click', e => {
+      if (box.classList.contains('armed')) return;
+      e.preventDefault();               // el primer toque solo desbloquea (no abre el teclado)
+      arm(box);
+    });
+    inputs.forEach(inp => {
+      inp.addEventListener('focus', () => arm(box));
+      inp.addEventListener('input', bumpArm);
+      inp.addEventListener('pointerdown', bumpArm);
+    });
+  }
+  doc.addEventListener('pointerdown', e => { if (armedBox && !armedBox.contains(e.target)) disarm(); }, true);
+
   function debounce(fn, ms) {
     let t = 0;
     const d = function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(null, a), ms); };
@@ -281,6 +312,6 @@
   root.HiloUI = Object.freeze({
     $, el, clear, icon, hydrateIcons, toast, modal, confirmBox, askPassword, askNumber,
     download, shareFile, canShareFiles, luminance, inkFor, letter, speak, keepAwake, vibrate, beep,
-    debounce, scriptURL
+    debounce, scriptURL, guard, disarm, arm, bumpArm
   });
 })(self);

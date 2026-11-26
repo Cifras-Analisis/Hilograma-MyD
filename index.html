@@ -119,7 +119,13 @@
           <button type="button" data-view="split" data-i18n="view_split">Comparar</button>
           <button type="button" data-view="threads" data-i18n="view_threads">Hilos</button>
         </div>
-        <div class="canvas-box" id="canvasBox"><canvas id="editCanvas"></canvas></div>
+        <div class="canvas-box" id="canvasBox"><canvas id="editCanvas"></canvas>
+          <div class="cb-lock mono" aria-hidden="true">
+            <span class="fl-lock"><span data-icon="lock" class="is-lock"></span><span data-icon="unlock" class="is-unlock"></span></span>
+            <span class="t-locked" data-i18n="ph_locked">Toca la foto para moverla o acercarla</span>
+            <span class="t-armed" data-i18n="ph_armed">Arrastra para mover · pellizca para acercar</span>
+          </div>
+        </div>
         <div class="term mono" id="genLog" aria-live="polite"></div>
         <div class="bar"><i id="genBar"></i></div>
         <p class="hint mono" data-i18n="hint_canvas">Arrastra para mover · rueda o pellizco para zoom · arrastra la barra para comparar foto e hilos</p>
@@ -131,7 +137,7 @@
         </div>
         <div class="quick" id="pQuick"></div>
         <div id="advBox" hidden>
-        <p class="note fh-intro" data-i18n="fh_intro">Al mover una barra verás debajo qué cambia al subirla (▲) o bajarla (▼).</p>
+        <p class="note fh-intro" data-i18n="fh_intro">Para no cambiar nada por error, toca primero el recuadro de una opción y luego mueve la barra. Debajo verás qué cambia al subirla (▲) o bajarla (▼).</p>
         <div class="tabs" id="designTabs" role="tablist">
           <button type="button" role="tab" data-tab="frame" data-i18n="tab_frame">Encuadre</button>
           <button type="button" role="tab" data-tab="thread" data-i18n="tab_thread">Hilo</button>
@@ -268,7 +274,7 @@
             <button type="button" class="btn hf-step" id="hfSlower" data-i18n-aria="hf_slower"><span data-icon="minus"></span></button>
             <div class="hf-speed"><b id="hfSec">6</b><span class="mono" data-i18n="hf_per_step">s por paso</span></div>
             <button type="button" class="btn hf-step" id="hfFaster" data-i18n-aria="hf_faster"><span data-icon="plus"></span></button>
-            <input type="range" id="hfRange" min="2" max="30" step="1" value="6" data-i18n-aria="hf_speed">
+            <span class="rguard" id="hfRangeBox" data-i18n-aria="g_tap"><span class="fl-lock" aria-hidden="true"><span data-icon="lock" class="is-lock"></span><span data-icon="unlock" class="is-unlock"></span></span><input type="range" id="hfRange" min="2" max="30" step="1" value="6" data-i18n-aria="hf_speed"></span>
           </div>
           <div class="hf-scale mono"><span data-i18n="hf_fast">2 s · rápido</span><span class="hf-rate" id="hfRate"></span><span data-i18n="hf_slow">30 s · lento</span></div>
         </div>

@@ -224,7 +224,22 @@ main { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; paddin
 
 .design { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
 .stage, .ctrl, .m-left, .m-ring, .tile, .proj, .fr-card, .panel { min-width: 0; }
-@media (min-width: 920px) { .design { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } .stage { position: sticky; top: 72px; } }
+@media (min-width: 920px) { .design { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } .stage { position: sticky; top: calc(var(--topbar-h, 60px) + 10px); } }
+/* En el celular la imagen queda fija arriba y los controles pasan por debajo:
+   se ve cómo cambia sin subir y bajar la pantalla. */
+@media (max-width: 919px) and (min-height: 560px) {
+  .stage {
+    position: sticky; top: var(--topbar-h, 58px); z-index: 6; padding: 6px 0 8px;
+    background: var(--bg); box-shadow: 0 12px 14px -10px rgba(0, 0, 0, 0.95);
+  }
+  .stage .hint { display: none; }
+  .stage .seg { margin-bottom: 6px; }
+  .stage .seg button { min-height: 36px; }
+  .stage .canvas-box { width: min(100%, 38vh, 520px); margin: 0 auto; }
+  .stage .term { min-height: 0; margin-top: 6px; padding: 3px 8px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage .bar { margin-top: 4px; }
+  .ctrl .field, .ctrl .tabs, .quick > * { scroll-margin-top: calc(var(--topbar-h, 58px) + min(100vw, 38vh) + 120px); }
+}
 .seg { display: flex; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
 .seg button {
   flex: 1; min-height: 42px; background: transparent; color: var(--dim); border: 0; border-right: 1px solid var(--line2);
@@ -234,10 +249,20 @@ main { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; paddin
 .seg button.on { background: rgba(0, 255, 136, 0.14); color: var(--neon); }
 .canvas-box {
   position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden;
-  border: 1px solid var(--line2); background: #000; touch-action: none; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--line2); background: #000; touch-action: pan-y; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
 }
-.canvas-box canvas { width: 100%; height: 100%; display: block; cursor: grab; }
-.canvas-box canvas:active { cursor: grabbing; }
+.canvas-box canvas { width: 100%; height: 100%; display: block; cursor: pointer; }
+.canvas-box.armed { touch-action: none; border-color: var(--neon); box-shadow: 0 0 0 2px var(--neon), 0 0 22px rgba(0, 255, 136, 0.45); }
+.canvas-box.armed canvas { cursor: grab; }
+.canvas-box.armed canvas:active { cursor: grabbing; }
+.cb-lock {
+  position: absolute; left: 8px; bottom: 8px; max-width: calc(100% - 16px); pointer-events: none;
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 11px;
+  color: var(--fg); background: rgba(2, 8, 6, 0.82); border: 1px solid var(--line2); white-space: nowrap; overflow: hidden;
+}
+.cb-lock .t-armed, .armed .cb-lock .t-locked { display: none; }
+.armed .cb-lock .t-armed { display: inline; }
+.armed .cb-lock { color: var(--neon); border-color: var(--neon); }
 .term { font-size: 12px; color: var(--neon); background: #010402; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-top: 8px; min-height: 2.2em; white-space: pre-wrap; }
 .bar { height: 6px; background: #021a0f; border-radius: 3px; margin-top: 6px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--neon-d), var(--neon)); box-shadow: var(--glow); transition: width 0.15s; }
@@ -252,8 +277,12 @@ main { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; paddin
 .tabs button.on { color: var(--neon); border-color: var(--line2); background: var(--panel); box-shadow: 0 -4px 14px rgba(0, 255, 136, 0.12); }
 .tabpanel { background: var(--panel); border: 1px solid var(--line2); border-top: 0; border-radius: 0 0 var(--r) var(--r); padding: 12px 14px; }
 
-.field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; margin: 10px 0 14px; }
-.field label { color: var(--fg); font-size: 22px; }
+.field {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; margin: 8px 0 10px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0, 0, 0, 0.18);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.field label { color: var(--fg); font-size: 22px; display: inline-flex; align-items: center; gap: 8px; }
 .field input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--neon); height: 28px; }
 .field .num { width: 92px; text-align: right; }
 .inp {
@@ -405,7 +434,12 @@ body.hf-mode #mFrame, body.hf-mode .m-tools, body.hf-mode .m-keys, body.hf-mode 
 .hf-speed { flex: none; display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05; min-width: 58px; }
 .hf-speed b { font-family: var(--mono); font-size: 26px; color: var(--fg); }
 .hf-speed span { font-size: 10px; color: var(--dim); }
-.hf-speedrow input[type="range"] { flex: 1 1 auto; min-width: 0; height: 32px; accent-color: var(--cyan); }
+.rguard {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 2px 8px;
+  border: 1px dashed var(--line2); border-radius: 10px; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.rguard input[type="range"] { flex: 1 1 auto; min-width: 0; height: 32px; accent-color: var(--cyan); }
+.rguard.armed { border-style: solid; border-color: var(--cyan); box-shadow: 0 0 12px rgba(41, 231, 255, 0.35); }
 .hf-scale { display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; font-size: 10px; color: var(--dim); }
 .hf-rate { color: var(--cyan); text-align: center; }
 @media (max-width: 400px) {
@@ -670,6 +704,18 @@ body.sheet-open { overflow: hidden; }
 .fhelp.up { border-color: var(--neon); background: rgba(0, 255, 136, 0.08); color: #c9ffe3; }
 .fhelp.down { border-color: var(--cyan); background: rgba(41, 231, 255, 0.08); color: #cdf6ff; }
 .fh-intro { margin: 0 0 10px; }
+
+/* ---------- barras con candado ---------- */
+.guard { cursor: pointer; }
+.guard input[type="range"] { pointer-events: none; opacity: 0.4; transition: opacity 0.15s; }
+.guard.armed { cursor: default; }
+.guard.armed input[type="range"] { pointer-events: auto; opacity: 1; }
+.field.guard.armed { border-color: var(--neon); background: rgba(0, 255, 136, 0.06); box-shadow: var(--glow); }
+.fl-lock { display: inline-flex; color: var(--dim); font-size: 15px; }
+.fl-lock .is-unlock, .armed .fl-lock .is-lock { display: none; }
+.armed .fl-lock .is-unlock { display: inline-flex; }
+.armed .fl-lock { color: var(--neon); }
+.rguard.armed .fl-lock { color: var(--cyan); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
