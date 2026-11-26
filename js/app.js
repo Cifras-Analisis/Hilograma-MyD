@@ -85,6 +85,7 @@
     langButton();
     ED.buildPanels();
     M.refresh();
+    root.HiloFrame.refresh();
     if (screen === 'home') renderProjects();
     if (screen === 'settings') renderSettings();
     if (screen === 'result' && res) renderResultInfo();
@@ -278,39 +279,6 @@
     return p.blocks.map((b, i) => '# ' + t('r_block', { n: i + 1 }) + ' · ' + U.letter(b[0]) + ' ' + (p.colors[b[0]].name || I.colorName(p.colors[b[0]].hex)) + ' (' + p.colors[b[0]].hex + ')\n' + b.slice(1).join(',')).join('\n\n');
   }
 
-  function xmlEsc(s) {
-    return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]));
-  }
-
-  // Plantilla para marcar los clavos, a escala real (unidades en mm).
-  function templateSVG(p) {
-    const Dm = p.diameterCm * 10, margin = 22, size = Dm + 2 * margin, c = size / 2, r = Dm / 2, n = p.nPins;
-    const sp = Math.PI * Dm / n;
-    const every = sp >= 7 ? 1 : sp >= 3.2 ? 5 : 10;
-    const fs = Math.max(1.8, Math.min(4.2, sp * every * 0.42));
-    const f = v => v.toFixed(2);
-    const out = [];
-    out.push('<?xml version="1.0" encoding="UTF-8"?>');
-    out.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + f(size) + 'mm" height="' + f(size) + 'mm" viewBox="0 0 ' + f(size) + ' ' + f(size) + '">');
-    out.push('<rect width="100%" height="100%" fill="#ffffff"/>');
-    out.push('<circle cx="' + f(c) + '" cy="' + f(c) + '" r="' + f(r) + '" fill="none" stroke="#999" stroke-width="0.25"/>');
-    out.push('<path d="M' + f(c - 6) + ' ' + f(c) + 'h12M' + f(c) + ' ' + f(c - 6) + 'v12" stroke="#999" stroke-width="0.25"/>');
-    for (let i = 0; i < n; i++) {
-      const a = 2 * Math.PI * i / n, x = c + r * Math.cos(a), y = c + r * Math.sin(a);
-      out.push('<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(Math.max(0.3, p.pegMm / 2)) + '" fill="#000"/>');
-      if (i % every === 0) {
-        const lx = c + (r + fs * 1.6) * Math.cos(a), ly = c + (r + fs * 1.6) * Math.sin(a);
-        out.push('<text x="' + f(lx) + '" y="' + f(ly) + '" font-family="monospace" font-size="' + f(fs) + '" text-anchor="middle" dominant-baseline="central" fill="#000">' + i + '</text>');
-      }
-    }
-    const title = xmlEsc(p.name) + ' | ' + n + ' ' + t('r_pins').toLowerCase() + ' | D ' + p.diameterCm + ' cm | ' + t('s_spacing', { cm: (sp / 10).toFixed(2), deg: (360 / n).toFixed(2) });
-    out.push('<text x="' + f(c) + '" y="' + f(c + 12) + '" font-family="monospace" font-size="3" text-anchor="middle" fill="#555">' + xmlEsc(title) + '</text>');
-    out.push('<text x="' + f(c) + '" y="' + f(c + 17) + '" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#777">' + xmlEsc(t('s_pin0')) + '</text>');
-    out.push('<text x="' + f(c) + '" y="' + f(size - 6) + '" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#777">Hilograma MyD</text>');
-    out.push('</svg>');
-    return out.join('\n');
-  }
-
   async function resultStart() {
     try {
       if (res.unsaved) { await St.saveProject(res.project, res.keyInfo); res.unsaved = false; }
@@ -440,10 +408,7 @@
         await U.shareFile(St.safeFileName(res.project.name) + '.hilo', txt);
       } catch (e) { fail(e); }
     });
-    $('btnTemplate').addEventListener('click', () => {
-      const p = res.project;
-      U.download(St.safeFileName(p.name) + '-' + (I.lang === 'es' ? 'plantilla' : 'template') + '-' + p.nPins + '.svg', templateSVG(p), 'image/svg+xml');
-    });
+    $('btnFrame').addEventListener('click', () => root.HiloFrame.open(root.HiloFrame.specFromProject(res.project)));
     $('btnSeq').addEventListener('click', () => {
       if (res.project.surprise) return;
       const box = $('seqBox');
@@ -505,6 +470,7 @@
       }
     });
     M.init(cfg);
+    root.HiloFrame.init();
     wire();
     show('home', false);
     boot(false);

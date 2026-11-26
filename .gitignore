@@ -8,3 +8,4 @@ Thumbs.db
 # La fuente "Present" (NJ Studio, All Rights Reserved) no se publica por defecto.
 # Quita esta linea solo si tienes licencia para redistribuirla.
 fonts/Present.ttf
+__pycache__/

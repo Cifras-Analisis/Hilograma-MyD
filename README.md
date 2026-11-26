@@ -39,6 +39,23 @@ Después, el **manual paso a paso**:
 - voz que dicta el siguiente clavo, modo *manos libres*, pantalla siempre encendida, teclado
   (espacio o → siguiente, ← anterior), *ir a paso*, plan de colores.
 
+### Guía para armar el marco
+
+Desde el resultado, el manual o la pestaña *Medidas*, el botón **Guía del marco** calcula todo lo
+necesario con las medidas reales del proyecto:
+
+- **número de clavos** (y cuántos comprar con repuestos), **diámetro y radio** del círculo,
+  **distancia entre clavos vecinos** en línea recta y por el arco, espacio libre entre ellos y
+  **ángulo entre clavos**;
+- **tablero** recomendado (tamaño y grosor), **clavo o puntilla** (grosor × largo, cuánto se entierra) y
+  **altura sobre el tablero**, calculada con el número real de vueltas de hilo que recibe cada clavo;
+- qué clavo va **arriba**, abajo y a la izquierda, para colgar el cuadro igual que la imagen;
+- esquema de frente y de lado, lista de **materiales** (con los metros de cada hilo) y **herramientas**,
+  **12 pasos** numerados y una **tabla de comprobación** de distancias entre clavos;
+- **plantilla PDF a escala real** dividida en hojas Carta o A4, con cruces para unirlas, línea de corte y
+  una barra de 10 cm en cada hoja para comprobar que se imprimió al 100 %; también **SVG en una sola
+  pieza** (para imprenta) y **coordenadas CSV** de cada clavo.
+
 ### Modo sorpresa
 
 Quien elige la imagen la ajusta y la previsualiza; al **sellar**, la imagen y el resultado se borran de
@@ -55,10 +72,11 @@ teclado. Las secuencias de un solo color son compatibles con el formato del orig
 
 - **En línea (recomendado):** publica la carpeta con GitHub Pages y abre la URL en el computador o en el
   celular; usa *Instalar app* para tenerla como aplicación y sin conexión.
-- **En tu computador:** desde esta carpeta ejecuta un servidor local y abre `http://localhost:8642`:
+- **En tu computador:** desde esta carpeta ejecuta el servidor local incluido (solo escucha en tu
+  equipo, sin caché y con las mismas cabeceras de seguridad que en producción) y abre `http://localhost:8642`:
 
   ```
-  python -m http.server 8642 --bind 127.0.0.1
+  python tools/serve.py
   ```
 
   Abrir `index.html` con doble clic también funciona, pero el cálculo va en el hilo principal y el cifrado
@@ -79,10 +97,12 @@ js/engine.js          algoritmo (del original, reescrito) + multicolor + metros
 js/worker.js          cálculo en segundo plano
 js/editor.js          imagen, vista previa, colores, medidas
 js/manual.js          paso a paso, guardado, respaldos, cambios de color
+js/frame.js           guía del marco, plantilla PDF/SVG y coordenadas CSV
 js/storage.js         formato .hilo, cifrado, validación, almacenamiento local
 js/i18n.js, flags.js  español / inglés y banderas
 sw.js, manifest       PWA sin conexión
 tools/make-icons.js   genera los iconos (node tools/make-icons.js)
+tools/serve.py        servidor local para probar la app
 ```
 
 ## Licencia
@@ -106,11 +126,13 @@ See [CREDITS.md](CREDITS.md).
 thickness (mm) and opacity (%) and a photo/threads compare slider; up to 6 thread colours plus board colour;
 metres of each thread computed from the frame diameter and peg size in cm; numbered step-by-step manual
 with full-screen colour-change prompts; progress saved on every step plus `.hilo` backups to Downloads;
-voice, hands-free mode and keyboard control; a real-scale SVG peg template; **Surprise mode** (the
+voice, hands-free mode and keyboard control; a **frame-building guide** (peg count, spacing, angle, board,
+nail size and height, materials, 12 steps, measurement check, and a real-scale PDF template tiled on Letter/A4
+sheets plus one-piece SVG and CSV coordinates); **Surprise mode** (the
 picture and result are erased when sealed, and the builder on another device only sees the manual);
 optional AES-256-GCM encryption; Spanish (default, Colombian flag) and English (flags of English-speaking
 countries). All options from the original are kept.
 
-**Run locally:** `python -m http.server 8642 --bind 127.0.0.1`, then open `http://localhost:8642`.
+**Run locally:** `python tools/serve.py`, then open `http://localhost:8642`.
 Security details: [SECURITY.md](SECURITY.md). License: MIT ([LICENSE](LICENSE)); the «Present» font is
 not covered by it.

@@ -666,6 +666,18 @@
     p.appendChild(field('tieCm', 's_tie', 0, 200, 1, { rmax: 50 }));
     p.appendChild(field('spoolM', 's_spool', 0, 100000, 1, { rmax: 2000 }));
     p.appendChild(el('p', { class: 'note', i18n: 's_pin0' }));
+    p.appendChild(el('button', { type: 'button', class: 'btn small', onclick: () => root.HiloFrame.open(frameSpec()) }, [icon('template'), el('span', { i18n: 'fr_open' })]));
+  }
+
+  // Datos del diseño actual para la guia del marco (la imagen no sale de aqui)
+  function frameSpec() {
+    const ok = !!(preview && preview.key === paramsKey());
+    return {
+      fromDesign: true, name: St.cleanText($('projName').value, 60) || t('proj_name_ph'),
+      nPins: ok ? preview.nPins : D.nPins, diameterCm: D.diameterCm, pegMm: D.pegMm, threadMm: D.threadMm, bg: D.bg,
+      colors: D.colors.map(c => ({ hex: c.hex, name: c.name })), blocks: ok ? preview.blocks : null,
+      marginPct: D.marginPct, tieCm: D.tieCm, spoolM: D.spoolM, lines: D.lines
+    };
   }
 
   function buildAdvPanel() {

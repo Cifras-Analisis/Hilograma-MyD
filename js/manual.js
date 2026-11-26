@@ -388,9 +388,10 @@
       U.modal({ title: t('r_plan'), body: planList(s < total ? info(s) : null), actions: [{ label: t('close'), value: true, kind: 'primary' }] });
     });
     $('mReveal').addEventListener('click', () => { revealed = true; artUpTo = -1; render(); });
+    $('mFrame').addEventListener('click', () => { if (P) root.HiloFrame.open(root.HiloFrame.specFromProject(P)); });
 
     root.document.addEventListener('keydown', e => {
-      if (!isOpen() || !$('modal').hidden) return;
+      if (!isOpen() || !$('modal').hidden || (root.HiloFrame && root.HiloFrame.isOpen())) return;
       const tag = (e.target && e.target.tagName) || '';
       if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
       if (ccOpen) {
