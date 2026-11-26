@@ -661,6 +661,16 @@ body.sheet-open { overflow: hidden; }
   .mp-t { font-size: 26px; }
 }
 
+/* ---------- ayuda al mover cada barra ---------- */
+.fhelp {
+  grid-column: 1 / -1; margin: 2px 0 0; padding: 6px 9px; font-size: 12px; line-height: 1.45;
+  border-left: 3px solid var(--line2); border-radius: 6px; background: rgba(0, 0, 0, 0.3); color: var(--fg);
+  overflow-wrap: anywhere; animation: fadein 0.2s ease-out;
+}
+.fhelp.up { border-color: var(--neon); background: rgba(0, 255, 136, 0.08); color: #c9ffe3; }
+.fhelp.down { border-color: var(--cyan); background: rgba(41, 231, 255, 0.08); color: #cdf6ff; }
+.fh-intro { margin: 0 0 10px; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

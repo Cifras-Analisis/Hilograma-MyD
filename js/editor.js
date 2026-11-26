@@ -601,6 +601,10 @@
     const set = v => { num.value = String(v); range.value = String(v); };
     const get = () => (o.get ? o.get() : D[key]);
     set(get());
+    // linea que explica que cambia al subir o bajar esta barra
+    const help = el('p', { class: 'fhelp mono', 'aria-live': 'polite', hidden: true });
+    let base = get();
+    const mark = () => { base = get(); };
     const apply = (v, final) => {
       v = Number(v);
       if (!Number.isFinite(v)) { set(get()); return; }
@@ -609,12 +613,44 @@
       if (o.set) o.set(v); else D[key] = v;
       if (final) set(get());
       onParam(key, final);
+      showFieldHelp(key, base, get(), help, step);
+      if (final) mark();
     };
+    range.addEventListener('pointerdown', mark);
+    range.addEventListener('focus', mark);
+    num.addEventListener('focus', mark);
     range.addEventListener('input', () => { num.value = range.value; apply(range.value, false); });
     range.addEventListener('change', () => apply(range.value, true));
     num.addEventListener('change', () => apply(num.value, true));
-    fields[key] = { set: () => set(get()) };
-    return el('div', { class: 'field' }, [el('label', { for: id, i18n: labelKey }), num, range]);
+    fields[key] = { set: () => { set(get()); mark(); } };
+    return el('div', { class: 'field' }, [el('label', { for: id, i18n: labelKey }), num, range, help]);
+  }
+
+  const HELP_KEYS = new Set(['zoom', 'bright', 'contrast', 'sat', 'threadMm', 'opacity', 'lines', 'weight', 'diameterCm',
+    'nPins', 'pegMm', 'marginPct', 'tieCm', 'spoolM', 'minDist', 'minLoop', 'size', 'rounds']);
+  const DENSITY_KEYS = new Set(['lines', 'threadMm', 'diameterCm']);
+  let lastHelp = null;
+
+  function showFieldHelp(key, from, to, helpEl, step) {
+    if (!HELP_KEYS.has(key) || from === to || !Number.isFinite(from) || !Number.isFinite(to)) return;
+    const up = to > from;
+    let k = 'fh_' + key + '_' + (up ? 'up' : 'down');
+    if (key === 'bright' && U.luminance(D.bg) < 0.4) k += '_inv';
+    const dec = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+    const extra = [];
+    if (DENSITY_KEYS.has(key)) extra.push(t('fh_density', { lvl: t('dn_' + densityLevel(coverageOf(null).c)) }));
+    if (key === 'nPins' || key === 'diameterCm') {
+      const sp = spacingInfo(D.nPins, D.diameterCm);
+      extra.push(t('s_spacing', { cm: I.fmt(sp.cm, 2), deg: I.fmt(sp.deg, 2) }));
+    }
+    const msg = extra.length ? t(k).replace(/\.$/, '') : t(k);
+    const txt = (up ? '▲ ' : '▼ ') + I.fmt(from, dec) + ' → ' + I.fmt(to, dec) + ': ' + [msg].concat(extra).join(' · ');
+    if (lastHelp && lastHelp !== helpEl) lastHelp.hidden = true;
+    helpEl.textContent = txt;
+    helpEl.hidden = false;
+    helpEl.classList.toggle('up', up);
+    helpEl.classList.toggle('down', !up);
+    lastHelp = helpEl;
   }
 
   function onParam(key, final) {

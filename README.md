@@ -18,7 +18,14 @@ circular, cuántos metros de cada color hacen falta, y te guía paso a paso mien
 
 ## Qué hace
 
-1. **Imagen** – elige una foto (o tómala con la cámara). Se procesa solo en la memoria del dispositivo.
+1. **Imagen** – elige el modo y una foto (o tómala con la cámara). La app da **consejos para elegir la
+   imagen** (cara de cerca, fondo claro, buena luz…) y avisa si la foto tiene demasiadas zonas oscuras.
+   Se procesa solo en la memoria del dispositivo.
+   - **Automático (recomendado):** solo eliges el estilo de color (clásico, invertido, a color desde la
+     imagen o tus colores) y el diámetro del marco. Clavos, líneas, brillo y contraste se calculan solos
+     para que el hilograma no quede oscuro.
+   - **Avanzado:** todas las opciones de abajo. Al mover cada barra se explica qué cambia al subirla (▲)
+     o bajarla (▼), con la nueva densidad estimada.
 2. **Diseño** – directamente sobre la imagen:
    - arrastra para encuadrar, pellizca o usa la rueda para hacer zoom, gira 90°;
    - brillo, contraste y saturación;
@@ -26,7 +33,8 @@ circular, cuántos metros de cada color hacen falta, y te guía paso a paso mien
      para comparar *foto | hilos* sobre la misma imagen;
    - **colores**: color del tablero y hasta 6 hilos (o *Sugerir desde la imagen*); alternancias de color;
    - **medidas en cm**: diámetro del marco, número y grosor de los clavos, margen y amarres.
-     La tabla muestra **líneas y metros de cada hilo** (neto y a comprar) y la separación entre clavos.
+     La tabla muestra **líneas y metros de cada hilo** (neto y a comprar) y la separación entre clavos;
+   - **densidad del hilo** (ligera, ideal, alta, muy alta) para saber antes de tejer si quedará oscuro.
 3. **Generar** – modo *Normal* o *Sorpresa*, contraseña opcional, y archivo `.hilo` para Descargas.
 
 Después, el **manual paso a paso**:
@@ -36,8 +44,12 @@ Después, el **manual paso a paso**:
   color, su letra (A, B, C…) y qué hacer ("ata y corta el hilo negro en el clavo 259; toma el rojo…");
 - el avance se **guarda en cada paso** en el dispositivo; respaldos `.hilo` automáticos en **Descargas**
   (cada 100/250/500/1000 pasos) o con el botón *Respaldo*;
-- voz que dicta el siguiente clavo, modo *manos libres*, pantalla siempre encendida, teclado
-  (espacio o → siguiente, ← anterior), *ir a paso*, plan de colores.
+- voz que dicta el siguiente clavo, pantalla siempre encendida, teclado (espacio o → siguiente,
+  ← anterior), *ir a paso*, plan de colores;
+- **manos libres**: pantalla despejada con botones grandes *Atrás · Pausar/Continuar · Adelante*,
+  velocidad de 2 a 30 s por paso, cuenta regresiva y tiempo restante; se detiene solo en los cambios de
+  color (tecla P para pausar);
+- en el inicio, **Continuar donde quedaste** abre el último proyecto en su paso.
 
 ### Guía para armar el marco
 
